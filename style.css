@@ -130,6 +130,10 @@ body {
   letter-spacing: 0.05em;
 }
 
+.deck-card-name {
+  font-weight: 700;
+}
+
 /* ── Card element ── */
 .card {
   background: #7b4f2e;

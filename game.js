@@ -189,10 +189,10 @@ const Game = (() => {
       if (cardType) {
         face.textContent = '';
         const nameEl = document.createElement('div');
+        nameEl.className = 'deck-card-name';
         nameEl.textContent = topCard;
         const descEl = document.createElement('small');
         descEl.textContent = cardType.description;
-        nameEl.style.fontWeight = '700';
         face.appendChild(nameEl);
         face.appendChild(descEl);
       } else {
