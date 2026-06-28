@@ -28,6 +28,16 @@ const Game = (() => {
     selectionArea: [],
   };
 
+  // ── Utilities ────────────────────────────────────────────────────────────
+
+  /** Fisher-Yates shuffle (in-place). */
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
   // ── Rendering ────────────────────────────────────────────────────────────
 
   /** Update every player's score display in the header. */
@@ -50,12 +60,28 @@ const Game = (() => {
       placeholder.className = 'placeholder-text';
       placeholder.textContent = 'Card selection area';
       section.appendChild(placeholder);
-      return;
+    } else {
+      state.selectionArea.forEach((card) => {
+        const cardEl = createCardElement(card);
+        section.appendChild(cardEl);
+      });
     }
 
-    state.selectionArea.forEach((card) => {
-      const cardEl = createCardElement(card);
-      section.appendChild(cardEl);
+    const tillBtn = document.createElement('button');
+    tillBtn.className = 'till-btn';
+    tillBtn.textContent = 'Till';
+    tillBtn.addEventListener('click', till);
+    section.appendChild(tillBtn);
+  }
+
+  /** Update each deck face to show the text of its top card. */
+  function renderDecks() {
+    state.decks.forEach((deck) => {
+      const deckEl = document.getElementById(`deck-${deck.id}`);
+      if (!deckEl) return;
+      const face = deckEl.querySelector('.deck-face');
+      if (!face) return;
+      face.textContent = deck.cards.length > 0 ? deck.cards[0] : '';
     });
   }
 
@@ -70,6 +96,18 @@ const Game = (() => {
     el.dataset.cardId = card.id;
     el.textContent = card.text ?? '';
     return el;
+  }
+
+  // ── Actions ──────────────────────────────────────────────────────────────
+
+  /** Move the top card of each deck to its bottom, then re-render decks. */
+  function till() {
+    state.decks.forEach((deck) => {
+      if (deck.cards.length > 0) {
+        deck.cards.push(deck.cards.shift());
+      }
+    });
+    renderDecks();
   }
 
   // ── Event wiring ─────────────────────────────────────────────────────────
@@ -96,8 +134,10 @@ const Game = (() => {
   // ── Initialisation ───────────────────────────────────────────────────────
 
   function init() {
+    state.decks.forEach((deck) => shuffle(deck.cards));
     renderScores();
     renderSelectionArea();
+    renderDecks();
     bindDeckClicks();
   }
 
@@ -108,6 +148,8 @@ const Game = (() => {
     state,
     renderScores,
     renderSelectionArea,
+    renderDecks,
+    till,
   };
 })();
 

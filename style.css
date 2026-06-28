@@ -100,14 +100,20 @@ body {
 .deck-face {
   width: 100%;
   aspect-ratio: 2 / 3;
-  background: #f5f0e8;
-  border: 3px solid #1a3a17;
+  background: #7b4f2e;
+  border: 3px solid #4a2a10;
   border-radius: 8px;
   box-shadow: 3px 4px 8px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  color: #f5f0e8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.5rem;
+  word-break: break-word;
 }
 
 .deck:hover .deck-face {
@@ -120,4 +126,42 @@ body {
   color: #b8d4b5;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* ── Card element ── */
+.card {
+  background: #7b4f2e;
+  border: 2px solid #4a2a10;
+  border-radius: 8px;
+  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.4);
+  color: #f5f0e8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.5rem;
+  min-width: 60px;
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  word-break: break-word;
+}
+
+/* ── Till button ── */
+.till-btn {
+  background: #4a2a10;
+  border: 2px solid #7b4f2e;
+  border-radius: 6px;
+  color: #f5f0e8;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.15s ease;
+}
+
+.till-btn:hover {
+  background: #7b4f2e;
 }
