@@ -41,7 +41,7 @@ const Game = (() => {
       coinValue: 2,
       bonusPerPotatoInGarden: 1,
     },
-    greenBeans: {
+    greenbeans: {
       displayName: 'green beans',
       description: '2 coins, pair: +1 coin',
       coinValue: 2,
