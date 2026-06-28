@@ -27,6 +27,7 @@ const Game = (() => {
       pairBonus: 2,
     },
   };
+  const PURCHASE_CARD_POOL = Object.freeze(['dirt', ...Object.keys(CARD_TYPES)]);
 
   /**
    * The six decks form a 3-column × 2-row grid.
@@ -54,12 +55,10 @@ const Game = (() => {
     ],
     /** Cards currently available for the active player to choose from. */
     selectionArea: [],
-    activePlayerId: 1,
     turnNumber: 1,
     phaseIndex: 0,
     purchase: {
       availablePacks: [],
-      aiChosenPacks: [],
       remainingPlayersAfterHuman: [],
       awaitingHumanSelection: false,
       humanPackCards: [],
@@ -132,45 +131,45 @@ const Game = (() => {
       tillBtn.addEventListener('click', till);
       section.appendChild(tillBtn);
     }
+  }
 
-    function renderPurchaseSelectionArea(section) {
-      if (state.purchase.humanPackCards.length > 0) {
-        state.purchase.humanPackCards.forEach((card) => {
-          const cardEl = createCardElement(card, { draggable: true });
-          section.appendChild(cardEl);
-        });
-        return;
-      }
-
-      if (state.purchase.availablePacks.length === 0) {
-        const placeholder = document.createElement('p');
-        placeholder.className = 'placeholder-text';
-        placeholder.textContent = 'No packs available';
-        section.appendChild(placeholder);
-        return;
-      }
-
-      state.purchase.availablePacks.forEach((pack) => {
-        const packEl = document.createElement('button');
-        packEl.className = 'purchase-pack';
-        packEl.type = 'button';
-        packEl.dataset.packId = pack.id;
-        if (!state.purchase.awaitingHumanSelection) packEl.disabled = true;
-
-        const topText = document.createElement('div');
-        topText.className = 'purchase-pack-top-card';
-        topText.textContent = pack.cards[0];
-
-        const sizeText = document.createElement('div');
-        sizeText.className = 'purchase-pack-size';
-        sizeText.textContent = `${pack.cards.length} cards`;
-
-        packEl.appendChild(topText);
-        packEl.appendChild(sizeText);
-        packEl.addEventListener('click', () => onPurchasePackClick(pack.id));
-        section.appendChild(packEl);
+  function renderPurchaseSelectionArea(section) {
+    if (state.purchase.humanPackCards.length > 0) {
+      state.purchase.humanPackCards.forEach((card) => {
+        const cardEl = createCardElement(card, { draggable: true });
+        section.appendChild(cardEl);
       });
+      return;
     }
+
+    if (state.purchase.availablePacks.length === 0) {
+      const placeholder = document.createElement('p');
+      placeholder.className = 'placeholder-text';
+      placeholder.textContent = 'No packs available';
+      section.appendChild(placeholder);
+      return;
+    }
+
+    state.purchase.availablePacks.forEach((pack) => {
+      const packEl = document.createElement('button');
+      packEl.className = 'purchase-pack';
+      packEl.type = 'button';
+      packEl.dataset.packId = pack.id;
+      if (!state.purchase.awaitingHumanSelection) packEl.disabled = true;
+
+      const topText = document.createElement('div');
+      topText.className = 'purchase-pack-top-card';
+      topText.textContent = pack.cards[0];
+
+      const sizeText = document.createElement('div');
+      sizeText.className = 'purchase-pack-size';
+      sizeText.textContent = `${pack.cards.length} cards`;
+
+      packEl.appendChild(topText);
+      packEl.appendChild(sizeText);
+      packEl.addEventListener('click', () => onPurchasePackClick(pack.id));
+      section.appendChild(packEl);
+    });
   }
 
   /** Update each deck face to show the top card name and its description (if any). */
@@ -230,8 +229,8 @@ const Game = (() => {
     return getCurrentPhase()?.id ?? '';
   }
 
-  function getActivePlayer() {
-    return state.players.find((player) => player.id === state.activePlayerId) ?? null;
+  function getHumanPlayer() {
+    return state.players.find((player) => !player.isAi) ?? null;
   }
 
   /**
@@ -266,12 +265,6 @@ const Game = (() => {
   /** Sum coins earned across all grid columns this scoring phase. */
   function countTotalCoins() {
     return GRID_COLUMNS.reduce((total, col) => total + scoreColumn(col), 0);
-  }
-
-  function advanceActivePlayer() {
-    const currentIndex = state.players.findIndex((player) => player.id === state.activePlayerId);
-    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % state.players.length;
-    state.activePlayerId = state.players[nextIndex].id;
   }
 
   function animatePlayerCoins(player, targetCoins, onComplete) {
@@ -324,7 +317,7 @@ const Game = (() => {
   }
 
   function enterScoringPhase() {
-    const player = getActivePlayer();
+    const player = getHumanPlayer();
     const onScoringComplete = () => {
       state.players.forEach((candidate) => {
         if (candidate.isAi) {
@@ -345,10 +338,9 @@ const Game = (() => {
   }
 
   function createPurchasePacks() {
-    const cardPool = ['dirt', ...Object.keys(CARD_TYPES)];
     return PURCHASE_PACK_SIZES.map((size, packIndex) => ({
       id: `turn-${state.turnNumber}-pack-${packIndex + 1}`,
-      cards: Array.from({ length: size }, () => getRandomElement(cardPool, 'dirt')),
+      cards: Array.from({ length: size }, () => getRandomElement(PURCHASE_CARD_POOL, 'dirt')),
     }));
   }
 
@@ -373,7 +365,6 @@ const Game = (() => {
 
   function enterPurchasePhase() {
     state.purchase.availablePacks = createPurchasePacks();
-    state.purchase.aiChosenPacks = [];
     state.purchase.remainingPlayersAfterHuman = [];
     state.purchase.awaitingHumanSelection = false;
     state.purchase.humanPackCards = [];
@@ -386,8 +377,7 @@ const Game = (() => {
         state.purchase.remainingPlayersAfterHuman = orderedPlayers.slice(i + 1);
         break;
       }
-      const selectedPack = takeLargestPack();
-      if (selectedPack) state.purchase.aiChosenPacks.push(selectedPack);
+      takeLargestPack();
     }
 
     renderSelectionArea();
@@ -403,8 +393,7 @@ const Game = (() => {
 
     state.purchase.awaitingHumanSelection = false;
     for (let i = 0; i < state.purchase.remainingPlayersAfterHuman.length; i += 1) {
-      const aiSelectedPack = takeLargestPack();
-      if (aiSelectedPack) state.purchase.aiChosenPacks.push(aiSelectedPack);
+      takeLargestPack();
     }
     state.purchase.remainingPlayersAfterHuman = [];
     state.purchase.availablePacks = [];
