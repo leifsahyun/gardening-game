@@ -59,6 +59,7 @@ const Game = (() => {
     phaseIndex: 0,
     purchase: {
       availablePacks: [],
+      aiChosenPacks: [],
       remainingPlayersAfterHuman: [],
       awaitingHumanSelection: false,
       humanPackCards: [],
@@ -85,8 +86,8 @@ const Game = (() => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  function getRandomElement(array) {
-    if (array.length === 0) return null;
+  function getRandomElement(array, fallback = '') {
+    if (array.length === 0) return fallback;
     return array[randomInt(0, array.length - 1)];
   }
 
@@ -347,7 +348,7 @@ const Game = (() => {
     const cardPool = ['dirt', ...Object.keys(CARD_TYPES)];
     return PURCHASE_PACK_SIZES.map((size, packIndex) => ({
       id: `turn-${state.turnNumber}-pack-${packIndex + 1}`,
-      cards: Array.from({ length: size }, () => getRandomElement(cardPool)),
+      cards: Array.from({ length: size }, () => getRandomElement(cardPool, 'dirt')),
     }));
   }
 
@@ -372,6 +373,7 @@ const Game = (() => {
 
   function enterPurchasePhase() {
     state.purchase.availablePacks = createPurchasePacks();
+    state.purchase.aiChosenPacks = [];
     state.purchase.remainingPlayersAfterHuman = [];
     state.purchase.awaitingHumanSelection = false;
     state.purchase.humanPackCards = [];
@@ -379,12 +381,13 @@ const Game = (() => {
     const orderedPlayers = getPlayersByCoinsDescending();
     for (let i = 0; i < orderedPlayers.length; i += 1) {
       const player = orderedPlayers[i];
-      if (player.id === 1) {
+      if (!player.isAi) {
         state.purchase.awaitingHumanSelection = true;
         state.purchase.remainingPlayersAfterHuman = orderedPlayers.slice(i + 1);
         break;
       }
-      takeLargestPack();
+      const selectedPack = takeLargestPack();
+      if (selectedPack) state.purchase.aiChosenPacks.push(selectedPack);
     }
 
     renderSelectionArea();
@@ -400,7 +403,8 @@ const Game = (() => {
 
     state.purchase.awaitingHumanSelection = false;
     for (let i = 0; i < state.purchase.remainingPlayersAfterHuman.length; i += 1) {
-      takeLargestPack();
+      const selectedPack = takeLargestPack();
+      if (selectedPack) state.purchase.aiChosenPacks.push(selectedPack);
     }
     state.purchase.remainingPlayersAfterHuman = [];
     state.purchase.availablePacks = [];
