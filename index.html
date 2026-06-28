@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gardening Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Header: scores for four players -->
+  <header id="scoreboard">
+    <div class="player-score" id="player1-score">
+      <span class="player-name">Player 1</span>
+      <span class="score" id="score-p1">0</span>
+    </div>
+    <div class="player-score" id="player2-score">
+      <span class="player-name">Player 2</span>
+      <span class="score" id="score-p2">0</span>
+    </div>
+    <div class="player-score" id="player3-score">
+      <span class="player-name">Player 3</span>
+      <span class="score" id="score-p3">0</span>
+    </div>
+    <div class="player-score" id="player4-score">
+      <span class="player-name">Player 4</span>
+      <span class="score" id="score-p4">0</span>
+    </div>
+  </header>
+
+  <main id="game-area">
+
+    <!-- Card selection area: where the active player chooses cards -->
+    <section id="selection-area" aria-label="Card selection area">
+      <p class="placeholder-text">Card selection area</p>
+    </section>
+
+    <!-- Six decks displayed in a 3x2 grid -->
+    <section id="deck-grid" aria-label="Card decks">
+      <div class="deck" id="deck-1" data-deck="1">
+        <div class="deck-face"></div>
+        <span class="deck-label">Deck 1</span>
+      </div>
+      <div class="deck" id="deck-2" data-deck="2">
+        <div class="deck-face"></div>
+        <span class="deck-label">Deck 2</span>
+      </div>
+      <div class="deck" id="deck-3" data-deck="3">
+        <div class="deck-face"></div>
+        <span class="deck-label">Deck 3</span>
+      </div>
+      <div class="deck" id="deck-4" data-deck="4">
+        <div class="deck-face"></div>
+        <span class="deck-label">Deck 4</span>
+      </div>
+      <div class="deck" id="deck-5" data-deck="5">
+        <div class="deck-face"></div>
+        <span class="deck-label">Deck 5</span>
+      </div>
+      <div class="deck" id="deck-6" data-deck="6">
+        <div class="deck-face"></div>
+        <span class="deck-label">Deck 6</span>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
