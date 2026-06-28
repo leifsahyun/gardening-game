@@ -1,0 +1,123 @@
+/* ── Reset & base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: sans-serif;
+  background: #2d5a27;
+  color: #f5f0e8;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Scoreboard header ── */
+#scoreboard {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: #1a3a17;
+  padding: 0.75rem 1rem;
+  border-bottom: 3px solid #4a8c42;
+}
+
+.player-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.player-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #b8d4b5;
+}
+
+.score {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #f5f0e8;
+}
+
+/* ── Main game area ── */
+#game-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem;
+  gap: 1.5rem;
+}
+
+/* ── Card selection area ── */
+#selection-area {
+  width: 100%;
+  max-width: 700px;
+  min-height: 160px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 2px dashed #4a8c42;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+#selection-area .placeholder-text {
+  color: #7aac75;
+  font-style: italic;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ── Deck grid: 3 columns × 2 rows ── */
+#deck-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, auto);
+  gap: 1rem;
+  width: 100%;
+  max-width: 700px;
+}
+
+/* ── Individual deck ── */
+.deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.deck-face {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: #f5f0e8;
+  border: 3px solid #1a3a17;
+  border-radius: 8px;
+  box-shadow: 3px 4px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.deck:hover .deck-face {
+  transform: translateY(-4px);
+  box-shadow: 3px 8px 14px rgba(0, 0, 0, 0.45);
+}
+
+.deck-label {
+  font-size: 0.8rem;
+  color: #b8d4b5;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
