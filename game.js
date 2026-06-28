@@ -282,7 +282,7 @@ const Game = (() => {
   function getTopCardsForDeckIndices(deckIndices) {
     return deckIndices
       .map((i) => state.decks[i]?.cards?.[0])
-      .filter((card) => Boolean(card));
+      .filter(Boolean);
   }
 
   function scoreColumnPairBonuses(columnDeckIndices) {
@@ -311,7 +311,7 @@ const Game = (() => {
     });
 
     const areThreeDifferentVegetables = topCards.length === 3
-      && topCards.every((card) => Boolean(CARD_TYPES[card]))
+      && topCards.every((card) => CARD_TYPES[card])
       && new Set(topCards).size === 3;
     if (areThreeDifferentVegetables) {
       const radishCount = typeCounts.radish ?? 0;
@@ -325,7 +325,7 @@ const Game = (() => {
   function countTotalCoins() {
     const topCards = state.decks
       .map((deck) => deck.cards[0])
-      .filter((card) => Boolean(card) && CARD_TYPES[card]);
+      .filter((card) => CARD_TYPES[card]);
     const typeCounts = countTypes(topCards);
 
     let total = topCards.reduce((sum, card) => sum + CARD_TYPES[card].coinValue, 0);
