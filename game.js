@@ -204,7 +204,6 @@ const Game = (() => {
     }
 
     state.turnNumber += 1;
-    advanceActivePlayer();
     startTurn();
   }
 
