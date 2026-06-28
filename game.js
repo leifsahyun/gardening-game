@@ -38,10 +38,10 @@ const Game = (() => {
 
   const state = {
     players: [
-      { id: 1, name: 'Player 1', coins: 0 },
-      { id: 2, name: 'Player 2', coins: 0 },
-      { id: 3, name: 'Player 3', coins: 0 },
-      { id: 4, name: 'Player 4', coins: 0 },
+      { id: 1, name: 'Player 1', coins: 0, isAi: false },
+      { id: 2, name: 'Player 2', coins: 0, isAi: true },
+      { id: 3, name: 'Player 3', coins: 0, isAi: true },
+      { id: 4, name: 'Player 4', coins: 0, isAi: true },
     ],
     /** Six decks – card contents to be defined later. */
     decks: [
@@ -158,7 +158,7 @@ const Game = (() => {
 
         const topText = document.createElement('div');
         topText.className = 'purchase-pack-top-card';
-        topText.textContent = pack.cards[0] ?? 'Empty Pack';
+        topText.textContent = pack.cards[0];
 
         const sizeText = document.createElement('div');
         sizeText.className = 'purchase-pack-size';
@@ -326,7 +326,7 @@ const Game = (() => {
     const player = getActivePlayer();
     const onScoringComplete = () => {
       state.players.forEach((candidate) => {
-        if (candidate.id >= 2 && candidate.id <= 4) {
+        if (candidate.isAi) {
           candidate.coins = randomInt(MIN_AI_COINS, MAX_AI_COINS);
         }
       });
@@ -354,6 +354,7 @@ const Game = (() => {
   function getPlayersByCoinsDescending() {
     return [...state.players].sort((a, b) => {
       if (b.coins !== a.coins) return b.coins - a.coins;
+      // Tie-breaker: lower player id picks first when coin totals are equal.
       return a.id - b.id;
     });
   }
@@ -403,9 +404,9 @@ const Game = (() => {
     }
     state.purchase.remainingPlayersAfterHuman = [];
     state.purchase.availablePacks = [];
-    state.purchase.humanPackCards = selectedPack.cards.map((text, index) => ({
+    state.purchase.humanPackCards = selectedPack.cards.map((cardType, index) => ({
       id: `${selectedPack.id}-card-${index}`,
-      text,
+      text: cardType,
     }));
     renderSelectionArea();
   }
