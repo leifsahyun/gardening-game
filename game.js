@@ -17,12 +17,12 @@ const Game = (() => {
     ],
     /** Six decks – card contents to be defined later. */
     decks: [
-      { id: 1, cards: [] },
-      { id: 2, cards: [] },
-      { id: 3, cards: [] },
-      { id: 4, cards: [] },
-      { id: 5, cards: [] },
-      { id: 6, cards: [] },
+      { id: 1, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 2, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 3, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 4, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 5, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 6, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
     ],
     /** Cards currently available for the active player to choose from. */
     selectionArea: [],
