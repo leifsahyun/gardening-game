@@ -6,14 +6,16 @@
  */
 
 const Game = (() => {
+  const SCORE_ANIMATION_DURATION_MS = 500;
+
   // ── State ────────────────────────────────────────────────────────────────
 
   const state = {
     players: [
-      { id: 1, name: 'Player 1', score: 0 },
-      { id: 2, name: 'Player 2', score: 0 },
-      { id: 3, name: 'Player 3', score: 0 },
-      { id: 4, name: 'Player 4', score: 0 },
+      { id: 1, name: 'Player 1', coins: 0 },
+      { id: 2, name: 'Player 2', coins: 0 },
+      { id: 3, name: 'Player 3', coins: 0 },
+      { id: 4, name: 'Player 4', coins: 0 },
     ],
     /** Six decks – card contents to be defined later. */
     decks: [
@@ -26,6 +28,14 @@ const Game = (() => {
     ],
     /** Cards currently available for the active player to choose from. */
     selectionArea: [],
+    activePlayerId: 1,
+    turnNumber: 1,
+    phaseIndex: 0,
+    phases: [
+      { id: 'tilling', onEnter: enterTillingPhase },
+      { id: 'scoring', onEnter: enterScoringPhase },
+      { id: 'endTurn', onEnter: enterEndTurnPhase },
+    ],
   };
 
   // ── Utilities ────────────────────────────────────────────────────────────
@@ -44,7 +54,7 @@ const Game = (() => {
   function renderScores() {
     state.players.forEach((player) => {
       const el = document.getElementById(`score-p${player.id}`);
-      if (el) el.textContent = player.score;
+      if (el) el.textContent = player.coins;
     });
   }
 
@@ -67,11 +77,13 @@ const Game = (() => {
       });
     }
 
-    const tillBtn = document.createElement('button');
-    tillBtn.className = 'till-btn';
-    tillBtn.textContent = 'Till';
-    tillBtn.addEventListener('click', till);
-    section.appendChild(tillBtn);
+    if (getCurrentPhaseId() === 'tilling') {
+      const tillBtn = document.createElement('button');
+      tillBtn.className = 'till-btn';
+      tillBtn.textContent = 'Till';
+      tillBtn.addEventListener('click', till);
+      section.appendChild(tillBtn);
+    }
   }
 
   /** Update each deck face to show the text of its top card. */
@@ -98,16 +110,119 @@ const Game = (() => {
     return el;
   }
 
+  function getCurrentPhase() {
+    return state.phases[state.phaseIndex] ?? null;
+  }
+
+  function getCurrentPhaseId() {
+    return getCurrentPhase()?.id ?? '';
+  }
+
+  function getActivePlayer() {
+    return state.players.find((player) => player.id === state.activePlayerId) ?? null;
+  }
+
+  function countTopDeckPotatoes() {
+    return state.decks.reduce((count, deck) => count + (isPotatoTopCard(deck) ? 1 : 0), 0);
+  }
+
+  function isPotatoTopCard(deck) {
+    return deck.cards.length > 0 && deck.cards[0] === 'potato';
+  }
+
+  function advanceActivePlayer() {
+    const currentIndex = state.players.findIndex((player) => player.id === state.activePlayerId);
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % state.players.length;
+    state.activePlayerId = state.players[nextIndex].id;
+  }
+
+  function animatePlayerCoins(player, targetCoins, onComplete) {
+    const startCoins = player.coins;
+    if (targetCoins <= startCoins) {
+      player.coins = targetCoins;
+      renderScores();
+      if (onComplete) onComplete();
+      return;
+    }
+
+    const startTime = performance.now();
+
+    const step = (timestamp) => {
+      const progress = Math.min((timestamp - startTime) / SCORE_ANIMATION_DURATION_MS, 1);
+      player.coins = startCoins + Math.floor((targetCoins - startCoins) * progress);
+      renderScores();
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        player.coins = targetCoins;
+        renderScores();
+        if (onComplete) onComplete();
+      }
+    };
+
+    requestAnimationFrame(step);
+  }
+
+  function runCurrentPhase() {
+    renderSelectionArea();
+    const phase = getCurrentPhase();
+    if (!phase) return;
+    phase.onEnter();
+  }
+
+  function advancePhase() {
+    state.phaseIndex += 1;
+    runCurrentPhase();
+  }
+
+  function startTurn() {
+    state.phaseIndex = 0;
+    runCurrentPhase();
+  }
+
+  function enterTillingPhase() {
+    // Wait for player action in the till button.
+  }
+
+  function enterScoringPhase() {
+    const player = getActivePlayer();
+    if (!player) {
+      advancePhase();
+      return;
+    }
+
+    const earnedCoins = countTopDeckPotatoes();
+    animatePlayerCoins(player, earnedCoins, advancePhase);
+  }
+
+  function enterEndTurnPhase() {
+    const player = getActivePlayer();
+    if (player) {
+      player.coins = 0;
+      renderScores();
+    }
+
+    state.turnNumber += 1;
+    startTurn();
+  }
+
   // ── Actions ──────────────────────────────────────────────────────────────
 
   /** Move the top card of each deck to its bottom, then re-render decks. */
-  function till() {
+  function tillDecks() {
     state.decks.forEach((deck) => {
       if (deck.cards.length > 0) {
         deck.cards.push(deck.cards.shift());
       }
     });
     renderDecks();
+  }
+
+  function till() {
+    if (getCurrentPhaseId() !== 'tilling') return;
+    tillDecks();
+    advancePhase();
   }
 
   // ── Event wiring ─────────────────────────────────────────────────────────
@@ -136,9 +251,9 @@ const Game = (() => {
   function init() {
     state.decks.forEach((deck) => shuffle(deck.cards));
     renderScores();
-    renderSelectionArea();
     renderDecks();
     bindDeckClicks();
+    startTurn();
   }
 
   // ── Public API ───────────────────────────────────────────────────────────
