@@ -123,7 +123,17 @@ const Game = (() => {
   }
 
   function countTopDeckPotatoes() {
-    return state.decks.reduce((count, deck) => count + (deck.cards.length > 0 && deck.cards[0] === 'potato' ? 1 : 0), 0);
+    return state.decks.reduce((count, deck) => count + (isPotatoTopCard(deck) ? 1 : 0), 0);
+  }
+
+  function isPotatoTopCard(deck) {
+    return deck.cards.length > 0 && deck.cards[0] === 'potato';
+  }
+
+  function advanceActivePlayer() {
+    const currentIndex = state.players.findIndex((player) => player.id === state.activePlayerId);
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % state.players.length;
+    state.activePlayerId = state.players[nextIndex].id;
   }
 
   function animatePlayerCoins(player, targetCoins, onComplete) {
@@ -183,7 +193,7 @@ const Game = (() => {
     }
 
     const earnedCoins = countTopDeckPotatoes();
-    const targetCoins = player.coins + earnedCoins;
+    const targetCoins = earnedCoins;
 
     animatePlayerCoins(player, targetCoins, advancePhase);
   }
@@ -196,6 +206,7 @@ const Game = (() => {
     }
 
     state.turnNumber += 1;
+    advanceActivePlayer();
     startTurn();
   }
 
