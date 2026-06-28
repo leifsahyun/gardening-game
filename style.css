@@ -147,6 +147,50 @@ body {
   word-break: break-word;
 }
 
+.card[draggable="true"] {
+  cursor: grab;
+}
+
+.card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.purchase-pack {
+  width: 120px;
+  min-height: 170px;
+  background: #7b4f2e;
+  border: 3px solid #4a2a10;
+  border-radius: 8px;
+  box-shadow: 3px 4px 8px rgba(0, 0, 0, 0.4);
+  color: #f5f0e8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+.purchase-pack:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.purchase-pack-top-card {
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.purchase-pack-size {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #d8c8b8;
+}
+
 /* ── Till button ── */
 .till-btn {
   background: #4a2a10;

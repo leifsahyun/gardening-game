@@ -7,6 +7,9 @@
 
 const Game = (() => {
   const SCORE_ANIMATION_DURATION_MS = 500;
+  const MIN_AI_COINS = 1;
+  const MAX_AI_COINS = 12;
+  const PURCHASE_PACK_SIZES = [4, 3, 3, 2];
 
   // ── Card types ───────────────────────────────────────────────────────────
 
@@ -24,6 +27,7 @@ const Game = (() => {
       pairBonus: 2,
     },
   };
+  const PURCHASE_CARD_POOL = Object.freeze(['dirt', ...Object.keys(CARD_TYPES)]);
 
   /**
    * The six decks form a 3-column × 2-row grid.
@@ -35,10 +39,10 @@ const Game = (() => {
 
   const state = {
     players: [
-      { id: 1, name: 'Player 1', coins: 0 },
-      { id: 2, name: 'Player 2', coins: 0 },
-      { id: 3, name: 'Player 3', coins: 0 },
-      { id: 4, name: 'Player 4', coins: 0 },
+      { id: 1, name: 'Player 1', coins: 0, isAi: false },
+      { id: 2, name: 'Player 2', coins: 0, isAi: true },
+      { id: 3, name: 'Player 3', coins: 0, isAi: true },
+      { id: 4, name: 'Player 4', coins: 0, isAi: true },
     ],
     /** Six decks – card contents to be defined later. */
     decks: [
@@ -51,12 +55,18 @@ const Game = (() => {
     ],
     /** Cards currently available for the active player to choose from. */
     selectionArea: [],
-    activePlayerId: 1,
     turnNumber: 1,
     phaseIndex: 0,
+    purchase: {
+      availablePacks: [],
+      remainingPlayersAfterHuman: [],
+      awaitingHumanSelection: false,
+      humanPackCards: [],
+    },
     phases: [
       { id: 'tilling', onEnter: enterTillingPhase },
       { id: 'scoring', onEnter: enterScoringPhase },
+      { id: 'purchase', onEnter: enterPurchasePhase },
       { id: 'endTurn', onEnter: enterEndTurnPhase },
     ],
   };
@@ -69,6 +79,15 @@ const Game = (() => {
       const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
+  }
+
+  function randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function getRandomElement(array, fallback = '') {
+    if (array.length === 0) return fallback;
+    return array[randomInt(0, array.length - 1)];
   }
 
   // ── Rendering ────────────────────────────────────────────────────────────
@@ -87,6 +106,11 @@ const Game = (() => {
     if (!section) return;
 
     section.innerHTML = '';
+
+    if (getCurrentPhaseId() === 'purchase') {
+      renderPurchaseSelectionArea(section);
+      return;
+    }
 
     if (state.selectionArea.length === 0) {
       const placeholder = document.createElement('p');
@@ -107,6 +131,45 @@ const Game = (() => {
       tillBtn.addEventListener('click', till);
       section.appendChild(tillBtn);
     }
+  }
+
+  function renderPurchaseSelectionArea(section) {
+    if (state.purchase.humanPackCards.length > 0) {
+      state.purchase.humanPackCards.forEach((card) => {
+        const cardEl = createCardElement(card, { draggable: true });
+        section.appendChild(cardEl);
+      });
+      return;
+    }
+
+    if (state.purchase.availablePacks.length === 0) {
+      const placeholder = document.createElement('p');
+      placeholder.className = 'placeholder-text';
+      placeholder.textContent = 'No packs available';
+      section.appendChild(placeholder);
+      return;
+    }
+
+    state.purchase.availablePacks.forEach((pack) => {
+      const packEl = document.createElement('button');
+      packEl.className = 'purchase-pack';
+      packEl.type = 'button';
+      packEl.dataset.packId = pack.id;
+      if (!state.purchase.awaitingHumanSelection) packEl.disabled = true;
+
+      const topText = document.createElement('div');
+      topText.className = 'purchase-pack-top-card';
+      topText.textContent = pack.cards[0];
+
+      const sizeText = document.createElement('div');
+      sizeText.className = 'purchase-pack-size';
+      sizeText.textContent = `${pack.cards.length} cards`;
+
+      packEl.appendChild(topText);
+      packEl.appendChild(sizeText);
+      packEl.addEventListener('click', () => onPurchasePackClick(pack.id));
+      section.appendChild(packEl);
+    });
   }
 
   /** Update each deck face to show the top card name and its description (if any). */
@@ -141,11 +204,20 @@ const Game = (() => {
    * @param {{ id: string|number, text?: string }} card
    * @returns {HTMLElement}
    */
-  function createCardElement(card) {
+  function createCardElement(card, options = {}) {
     const el = document.createElement('div');
     el.className = 'card';
     el.dataset.cardId = card.id;
     el.textContent = card.text ?? '';
+    if (options.draggable) {
+      el.draggable = true;
+      el.addEventListener('dragstart', (event) => {
+        if (event.dataTransfer) {
+          event.dataTransfer.setData('text/plain', String(card.id));
+          event.dataTransfer.effectAllowed = 'move';
+        }
+      });
+    }
     return el;
   }
 
@@ -157,8 +229,8 @@ const Game = (() => {
     return getCurrentPhase()?.id ?? '';
   }
 
-  function getActivePlayer() {
-    return state.players.find((player) => player.id === state.activePlayerId) ?? null;
+  function getHumanPlayer() {
+    return state.players.find((player) => !player.isAi) ?? null;
   }
 
   /**
@@ -193,12 +265,6 @@ const Game = (() => {
   /** Sum coins earned across all grid columns this scoring phase. */
   function countTotalCoins() {
     return GRID_COLUMNS.reduce((total, col) => total + scoreColumn(col), 0);
-  }
-
-  function advanceActivePlayer() {
-    const currentIndex = state.players.findIndex((player) => player.id === state.activePlayerId);
-    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % state.players.length;
-    state.activePlayerId = state.players[nextIndex].id;
   }
 
   function animatePlayerCoins(player, targetCoins, onComplete) {
@@ -251,22 +317,118 @@ const Game = (() => {
   }
 
   function enterScoringPhase() {
-    const player = getActivePlayer();
-    if (!player) {
+    const player = getHumanPlayer();
+    const onScoringComplete = () => {
+      state.players.forEach((candidate) => {
+        if (candidate.isAi) {
+          candidate.coins = randomInt(MIN_AI_COINS, MAX_AI_COINS);
+        }
+      });
+      renderScores();
       advancePhase();
+    };
+
+    if (!player) {
+      onScoringComplete();
       return;
     }
 
     const earnedCoins = countTotalCoins();
-    animatePlayerCoins(player, earnedCoins, advancePhase);
+    animatePlayerCoins(player, earnedCoins, onScoringComplete);
+  }
+
+  function createPurchasePacks() {
+    return PURCHASE_PACK_SIZES.map((size, packIndex) => ({
+      id: `turn-${state.turnNumber}-pack-${packIndex + 1}`,
+      cards: Array.from({ length: size }, () => getRandomElement(PURCHASE_CARD_POOL, 'dirt')),
+    }));
+  }
+
+  function getPlayersByCoinsDescending() {
+    return [...state.players].sort((a, b) => {
+      if (b.coins !== a.coins) return b.coins - a.coins;
+      // Tie-breaker: lower player id picks first when coin totals are equal.
+      return a.id - b.id;
+    });
+  }
+
+  function takeLargestPack() {
+    if (state.purchase.availablePacks.length === 0) return null;
+    let largestIndex = 0;
+    state.purchase.availablePacks.forEach((pack, index) => {
+      if (pack.cards.length > state.purchase.availablePacks[largestIndex].cards.length) {
+        largestIndex = index;
+      }
+    });
+    return state.purchase.availablePacks.splice(largestIndex, 1)[0] ?? null;
+  }
+
+  function enterPurchasePhase() {
+    state.purchase.availablePacks = createPurchasePacks();
+    state.purchase.remainingPlayersAfterHuman = [];
+    state.purchase.awaitingHumanSelection = false;
+    state.purchase.humanPackCards = [];
+
+    const orderedPlayers = getPlayersByCoinsDescending();
+    for (let i = 0; i < orderedPlayers.length; i += 1) {
+      const player = orderedPlayers[i];
+      if (!player.isAi) {
+        state.purchase.awaitingHumanSelection = true;
+        state.purchase.remainingPlayersAfterHuman = orderedPlayers.slice(i + 1);
+        break;
+      }
+      takeLargestPack();
+    }
+
+    renderSelectionArea();
+  }
+
+  function onPurchasePackClick(packId) {
+    if (getCurrentPhaseId() !== 'purchase' || !state.purchase.awaitingHumanSelection) return;
+    const packIndex = state.purchase.availablePacks.findIndex((pack) => pack.id === packId);
+    if (packIndex === -1) return;
+
+    const [selectedPack] = state.purchase.availablePacks.splice(packIndex, 1);
+    if (!selectedPack) return;
+
+    state.purchase.awaitingHumanSelection = false;
+    for (let i = 0; i < state.purchase.remainingPlayersAfterHuman.length; i += 1) {
+      takeLargestPack();
+    }
+    state.purchase.remainingPlayersAfterHuman = [];
+    state.purchase.availablePacks = [];
+    state.purchase.humanPackCards = selectedPack.cards.map((cardType, index) => ({
+      id: `${selectedPack.id}-card-${index}`,
+      text: cardType,
+    }));
+    renderSelectionArea();
+  }
+
+  function onDeckDrop(deckId, cardId) {
+    if (getCurrentPhaseId() !== 'purchase' || state.purchase.awaitingHumanSelection) return;
+    const cardIndex = state.purchase.humanPackCards.findIndex((card) => String(card.id) === cardId);
+    if (cardIndex === -1) return;
+
+    const [card] = state.purchase.humanPackCards.splice(cardIndex, 1);
+    const deck = state.decks.find((candidate) => candidate.id === deckId);
+    if (!deck) return;
+
+    deck.cards.push(card.text);
+    renderDecks();
+
+    if (state.purchase.humanPackCards.length === 0) {
+      advancePhase();
+      return;
+    }
+
+    renderSelectionArea();
   }
 
   function enterEndTurnPhase() {
-    const player = getActivePlayer();
-    if (player) {
+    state.players.forEach((player) => {
       player.coins = 0;
-      renderScores();
-    }
+    });
+    renderScores();
 
     state.turnNumber += 1;
     startTurn();
@@ -302,6 +464,24 @@ const Game = (() => {
     });
   }
 
+  function bindDeckDrops() {
+    document.querySelectorAll('.deck').forEach((deckEl) => {
+      deckEl.addEventListener('dragover', (event) => {
+        if (getCurrentPhaseId() !== 'purchase' || state.purchase.awaitingHumanSelection) return;
+        event.preventDefault();
+      });
+      deckEl.addEventListener('drop', (event) => {
+        if (getCurrentPhaseId() !== 'purchase' || state.purchase.awaitingHumanSelection) return;
+        event.preventDefault();
+        const cardId = event.dataTransfer?.getData('text/plain');
+        if (!deckEl.dataset.deck || !cardId) return;
+        const deckId = parseInt(deckEl.dataset.deck, 10);
+        if (Number.isNaN(deckId)) return;
+        onDeckDrop(deckId, cardId);
+      });
+    });
+  }
+
   /**
    * Called when a player clicks a deck.
    * Replace with game logic once card content is defined.
@@ -318,6 +498,7 @@ const Game = (() => {
     renderScores();
     renderDecks();
     bindDeckClicks();
+    bindDeckDrops();
     startTurn();
   }
 
