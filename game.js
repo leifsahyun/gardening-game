@@ -7,6 +7,8 @@
 
 const Game = (() => {
   const SCORE_ANIMATION_DURATION_MS = 500;
+  const MIN_AI_COINS = 1;
+  const MAX_AI_COINS = 12;
   const PURCHASE_PACK_SIZES = [4, 3, 3, 2];
 
   // ── Card types ───────────────────────────────────────────────────────────
@@ -83,6 +85,11 @@ const Game = (() => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
+  function getRandomElement(array) {
+    if (array.length === 0) return null;
+    return array[randomInt(0, array.length - 1)];
+  }
+
   // ── Rendering ────────────────────────────────────────────────────────────
 
   /** Update every player's score display in the header. */
@@ -151,7 +158,7 @@ const Game = (() => {
 
         const topText = document.createElement('div');
         topText.className = 'purchase-pack-top-card';
-        topText.textContent = pack.cards[0] ?? '';
+        topText.textContent = pack.cards[0] ?? 'Empty Pack';
 
         const sizeText = document.createElement('div');
         sizeText.className = 'purchase-pack-size';
@@ -320,7 +327,7 @@ const Game = (() => {
     const onScoringComplete = () => {
       state.players.forEach((candidate) => {
         if (candidate.id >= 2 && candidate.id <= 4) {
-          candidate.coins = randomInt(1, 12);
+          candidate.coins = randomInt(MIN_AI_COINS, MAX_AI_COINS);
         }
       });
       renderScores();
@@ -340,7 +347,7 @@ const Game = (() => {
     const cardPool = ['dirt', ...Object.keys(CARD_TYPES)];
     return PURCHASE_PACK_SIZES.map((size, packIndex) => ({
       id: `turn-${state.turnNumber}-pack-${packIndex + 1}`,
-      cards: Array.from({ length: size }, () => cardPool[randomInt(0, cardPool.length - 1)]),
+      cards: Array.from({ length: size }, () => getRandomElement(cardPool)),
     }));
   }
 
@@ -362,11 +369,6 @@ const Game = (() => {
     return state.purchase.availablePacks.splice(largestIndex, 1)[0] ?? null;
   }
 
-  function assignLargestPackToAi() {
-    const pack = takeLargestPack();
-    return pack;
-  }
-
   function enterPurchasePhase() {
     state.purchase.availablePacks = createPurchasePacks();
     state.purchase.remainingPlayersAfterHuman = [];
@@ -381,7 +383,7 @@ const Game = (() => {
         state.purchase.remainingPlayersAfterHuman = orderedPlayers.slice(i + 1);
         break;
       }
-      assignLargestPackToAi();
+      takeLargestPack();
     }
 
     renderSelectionArea();
@@ -396,9 +398,9 @@ const Game = (() => {
     if (!selectedPack) return;
 
     state.purchase.awaitingHumanSelection = false;
-    state.purchase.remainingPlayersAfterHuman.forEach(() => {
-      assignLargestPackToAi();
-    });
+    for (let i = 0; i < state.purchase.remainingPlayersAfterHuman.length; i += 1) {
+      takeLargestPack();
+    }
     state.purchase.remainingPlayersAfterHuman = [];
     state.purchase.availablePacks = [];
     state.purchase.humanPackCards = selectedPack.cards.map((text, index) => ({
