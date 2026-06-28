@@ -193,9 +193,7 @@ const Game = (() => {
     }
 
     const earnedCoins = countTopDeckPotatoes();
-    const targetCoins = earnedCoins;
-
-    animatePlayerCoins(player, targetCoins, advancePhase);
+    animatePlayerCoins(player, earnedCoins, advancePhase);
   }
 
   function enterEndTurnPhase() {
