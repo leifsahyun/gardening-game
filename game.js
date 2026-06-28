@@ -8,6 +8,29 @@
 const Game = (() => {
   const SCORE_ANIMATION_DURATION_MS = 500;
 
+  // ── Card types ───────────────────────────────────────────────────────────
+
+  /**
+   * Defines scoring behaviour and display description for each card type.
+   * coinValue  – coins awarded per card when it is the top card of a deck.
+   * pairBonus  – extra coins awarded when 2+ cards of this type appear as top
+   *              cards in the same grid column.
+   * description – text shown on the card face below the card name.
+   */
+  const CARD_TYPES = {
+    potato: {
+      description: '1 coin, pair: +2 coins',
+      coinValue: 1,
+      pairBonus: 2,
+    },
+  };
+
+  /**
+   * The six decks form a 3-column × 2-row grid.
+   * Each entry lists the indices (into state.decks) that share a column.
+   */
+  const GRID_COLUMNS = [[0, 3], [1, 4], [2, 5]];
+
   // ── State ────────────────────────────────────────────────────────────────
 
   const state = {
@@ -86,14 +109,30 @@ const Game = (() => {
     }
   }
 
-  /** Update each deck face to show the text of its top card. */
+  /** Update each deck face to show the top card name and its description (if any). */
   function renderDecks() {
     state.decks.forEach((deck) => {
       const deckEl = document.getElementById(`deck-${deck.id}`);
       if (!deckEl) return;
       const face = deckEl.querySelector('.deck-face');
       if (!face) return;
-      face.textContent = deck.cards.length > 0 ? deck.cards[0] : '';
+      if (deck.cards.length === 0) {
+        face.textContent = '';
+        return;
+      }
+      const topCard = deck.cards[0];
+      const cardType = CARD_TYPES[topCard];
+      if (cardType) {
+        face.textContent = '';
+        const nameNode = document.createTextNode(topCard);
+        const descEl = document.createElement('small');
+        descEl.textContent = cardType.description;
+        face.appendChild(nameNode);
+        face.appendChild(document.createElement('br'));
+        face.appendChild(descEl);
+      } else {
+        face.textContent = topCard;
+      }
     });
   }
 
@@ -122,12 +161,38 @@ const Game = (() => {
     return state.players.find((player) => player.id === state.activePlayerId) ?? null;
   }
 
-  function countTopDeckPotatoes() {
-    return state.decks.reduce((count, deck) => count + (isPotatoTopCard(deck) ? 1 : 0), 0);
+  /**
+   * Score a single grid column.
+   * Awards each card's coinValue and a pairBonus when ≥2 of the same card type
+   * appear as the top card in that column.
+   * @param {number[]} columnDeckIndices – indices into state.decks
+   * @returns {number}
+   */
+  function scoreColumn(columnDeckIndices) {
+    const columnDecks = columnDeckIndices
+      .map((i) => state.decks[i])
+      .filter((deck) => deck?.cards);
+    let coins = 0;
+    const typeCounts = {};
+    columnDecks.forEach((deck) => {
+      const topCard = deck.cards[0];
+      if (!topCard) return;
+      const cardType = CARD_TYPES[topCard];
+      if (!cardType) return;
+      coins += cardType.coinValue;
+      typeCounts[topCard] = (typeCounts[topCard] ?? 0) + 1;
+    });
+    Object.entries(typeCounts).forEach(([type, count]) => {
+      if (count >= 2 && CARD_TYPES[type].pairBonus) {
+        coins += CARD_TYPES[type].pairBonus;
+      }
+    });
+    return coins;
   }
 
-  function isPotatoTopCard(deck) {
-    return deck.cards.length > 0 && deck.cards[0] === 'potato';
+  /** Sum coins earned across all grid columns this scoring phase. */
+  function countTotalCoins() {
+    return GRID_COLUMNS.reduce((total, col) => total + scoreColumn(col), 0);
   }
 
   function advanceActivePlayer() {
@@ -192,7 +257,7 @@ const Game = (() => {
       return;
     }
 
-    const earnedCoins = countTopDeckPotatoes();
+    const earnedCoins = countTotalCoins();
     animatePlayerCoins(player, earnedCoins, advancePhase);
   }
 
