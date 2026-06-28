@@ -112,12 +112,7 @@ const Game = (() => {
       return;
     }
 
-    if (state.selectionArea.length === 0) {
-      const placeholder = document.createElement('p');
-      placeholder.className = 'placeholder-text';
-      placeholder.textContent = 'Card selection area';
-      section.appendChild(placeholder);
-    } else {
+    if (state.selectionArea.length > 0) {
       state.selectionArea.forEach((card) => {
         const cardEl = createCardElement(card);
         section.appendChild(cardEl);
@@ -178,6 +173,12 @@ const Game = (() => {
       const deckEl = document.getElementById(`deck-${deck.id}`);
       if (!deckEl) return;
       const face = deckEl.querySelector('.deck-face');
+      const label = deckEl.querySelector('.deck-label');
+      if (label) {
+        const cardCount = deck.cards.length;
+        const cardWord = cardCount === 1 ? 'card' : 'cards';
+        label.textContent = `Deck ${deck.id} (${cardCount} ${cardWord})`;
+      }
       if (!face) return;
       if (deck.cards.length === 0) {
         face.textContent = '';
@@ -187,11 +188,12 @@ const Game = (() => {
       const cardType = CARD_TYPES[topCard];
       if (cardType) {
         face.textContent = '';
-        const nameNode = document.createTextNode(topCard);
+        const nameEl = document.createElement('div');
+        nameEl.className = 'deck-card-name';
+        nameEl.textContent = topCard;
         const descEl = document.createElement('small');
         descEl.textContent = cardType.description;
-        face.appendChild(nameNode);
-        face.appendChild(document.createElement('br'));
+        face.appendChild(nameEl);
         face.appendChild(descEl);
       } else {
         face.textContent = topCard;
