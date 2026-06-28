@@ -41,7 +41,8 @@ const Game = (() => {
       coinValue: 2,
       bonusPerPotatoInGarden: 1,
     },
-    'green beans': {
+    greenBeans: {
+      displayName: 'green beans',
       description: '2 coins, pair: +1 coin',
       coinValue: 2,
       pairBonus: 1,
@@ -126,6 +127,10 @@ const Game = (() => {
     return array[randomInt(0, array.length - 1)];
   }
 
+  function getCardLabel(cardType) {
+    return CARD_TYPES[cardType]?.displayName ?? cardType;
+  }
+
   // ── Rendering ────────────────────────────────────────────────────────────
 
   /** Update every player's score display in the header. */
@@ -190,7 +195,7 @@ const Game = (() => {
 
       const topText = document.createElement('div');
       topText.className = 'purchase-pack-top-card';
-      topText.textContent = pack.cards[0];
+      topText.textContent = getCardLabel(pack.cards[0]);
 
       const sizeText = document.createElement('div');
       sizeText.className = 'purchase-pack-size';
@@ -226,7 +231,7 @@ const Game = (() => {
         face.textContent = '';
         const nameEl = document.createElement('div');
         nameEl.className = 'deck-card-name';
-        nameEl.textContent = topCard;
+        nameEl.textContent = getCardLabel(topCard);
         const descEl = document.createElement('small');
         descEl.textContent = cardType.description;
         face.appendChild(nameEl);
@@ -477,7 +482,8 @@ const Game = (() => {
     state.purchase.availablePacks = [];
     state.purchase.humanPackCards = selectedPack.cards.map((cardType, index) => ({
       id: `${selectedPack.id}-card-${index}`,
-      text: cardType,
+      cardType,
+      text: getCardLabel(cardType),
     }));
     renderSelectionArea();
   }
@@ -491,7 +497,7 @@ const Game = (() => {
     const deck = state.decks.find((candidate) => candidate.id === deckId);
     if (!deck) return;
 
-    deck.cards.push(card.text);
+    deck.cards.push(card.cardType);
     renderDecks();
 
     if (state.purchase.humanPackCards.length === 0) {
