@@ -6,14 +6,16 @@
  */
 
 const Game = (() => {
+  const SCORE_ANIMATION_DURATION_MS = 500;
+
   // ── State ────────────────────────────────────────────────────────────────
 
   const state = {
     players: [
-      { id: 1, name: 'Player 1', score: 0 },
-      { id: 2, name: 'Player 2', score: 0 },
-      { id: 3, name: 'Player 3', score: 0 },
-      { id: 4, name: 'Player 4', score: 0 },
+      { id: 1, name: 'Player 1', coins: 0 },
+      { id: 2, name: 'Player 2', coins: 0 },
+      { id: 3, name: 'Player 3', coins: 0 },
+      { id: 4, name: 'Player 4', coins: 0 },
     ],
     /** Six decks – card contents to be defined later. */
     decks: [
@@ -52,7 +54,7 @@ const Game = (() => {
   function renderScores() {
     state.players.forEach((player) => {
       const el = document.getElementById(`score-p${player.id}`);
-      if (el) el.textContent = player.score;
+      if (el) el.textContent = player.coins;
     });
   }
 
@@ -121,30 +123,29 @@ const Game = (() => {
   }
 
   function countTopDeckPotatoes() {
-    return state.decks.reduce((count, deck) => count + (deck.cards[0] === 'potato' ? 1 : 0), 0);
+    return state.decks.reduce((count, deck) => count + (deck.cards.length > 0 && deck.cards[0] === 'potato' ? 1 : 0), 0);
   }
 
-  function animatePlayerScore(player, targetScore, onComplete) {
-    const startScore = player.score;
-    if (targetScore <= startScore) {
-      player.score = targetScore;
+  function animatePlayerCoins(player, targetCoins, onComplete) {
+    const startCoins = player.coins;
+    if (targetCoins <= startCoins) {
+      player.coins = targetCoins;
       renderScores();
       if (onComplete) onComplete();
       return;
     }
 
-    const durationMs = 500;
     const startTime = performance.now();
 
     const step = (timestamp) => {
-      const progress = Math.min((timestamp - startTime) / durationMs, 1);
-      player.score = startScore + Math.floor((targetScore - startScore) * progress);
+      const progress = Math.min((timestamp - startTime) / SCORE_ANIMATION_DURATION_MS, 1);
+      player.coins = startCoins + Math.floor((targetCoins - startCoins) * progress);
       renderScores();
 
       if (progress < 1) {
         requestAnimationFrame(step);
       } else {
-        player.score = targetScore;
+        player.coins = targetCoins;
         renderScores();
         if (onComplete) onComplete();
       }
@@ -182,15 +183,15 @@ const Game = (() => {
     }
 
     const earnedCoins = countTopDeckPotatoes();
-    const targetScore = player.score + earnedCoins;
+    const targetCoins = player.coins + earnedCoins;
 
-    animatePlayerScore(player, targetScore, advancePhase);
+    animatePlayerCoins(player, targetCoins, advancePhase);
   }
 
   function enterEndTurnPhase() {
     const player = getActivePlayer();
     if (player) {
-      player.score = 0;
+      player.coins = 0;
       renderScores();
     }
 
