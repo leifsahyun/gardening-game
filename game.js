@@ -403,8 +403,8 @@ const Game = (() => {
 
     state.purchase.awaitingHumanSelection = false;
     for (let i = 0; i < state.purchase.remainingPlayersAfterHuman.length; i += 1) {
-      const selectedPack = takeLargestPack();
-      if (selectedPack) state.purchase.aiChosenPacks.push(selectedPack);
+      const aiSelectedPack = takeLargestPack();
+      if (aiSelectedPack) state.purchase.aiChosenPacks.push(aiSelectedPack);
     }
     state.purchase.remainingPlayersAfterHuman = [];
     state.purchase.availablePacks = [];
