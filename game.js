@@ -597,21 +597,21 @@ const Game = (() => {
     runCurrentPhase();
   }
 
-  function deckHasPendingEffect(deckId) {
-    const deck = state.decks.find((candidate) => candidate.id === deckId);
+  function deckHasPendingEffect(deck) {
     const topCard = deck?.cards[0];
     return !!(topCard && CARD_TYPES[topCard]?.effect);
   }
 
   function getPendingEffectDeckIds() {
     return state.decks
-      .filter((deck) => deckHasPendingEffect(deck.id))
+      .filter((deck) => deckHasPendingEffect(deck))
       .map((deck) => deck.id);
   }
 
   function refreshPendingEffects() {
+    const pendingEffectDeckIds = new Set(getPendingEffectDeckIds());
     state.effects.pendingDecks = state.effects.pendingDecks
-      .filter((deckId) => deckHasPendingEffect(deckId));
+      .filter((deckId) => pendingEffectDeckIds.has(deckId));
   }
 
   function enterTillingPhase() {
