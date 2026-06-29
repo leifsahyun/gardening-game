@@ -597,17 +597,25 @@ const Game = (() => {
     runCurrentPhase();
   }
 
+  function deckHasPendingEffect(deckId) {
+    const deck = state.decks.find((candidate) => candidate.id === deckId);
+    const topCard = deck?.cards[0];
+    return !!(topCard && CARD_TYPES[topCard]?.effect);
+  }
+
+  function refreshPendingEffects() {
+    state.effects.pendingDecks = [...new Set(
+      state.effects.pendingDecks.filter((deckId) => deckHasPendingEffect(deckId)),
+    )];
+  }
+
   function enterTillingPhase() {
     // Wait for player action via the till button.
   }
 
   function enterEffectsPhase() {
-    state.effects.pendingDecks = state.decks
-      .filter((deck) => {
-        const top = deck.cards[0];
-        return top && CARD_TYPES[top]?.effect;
-      })
-      .map((deck) => deck.id);
+    state.effects.pendingDecks = state.decks.map((deck) => deck.id);
+    refreshPendingEffects();
     state.effects.activeDeckId = null;
     state.effects.targeting = null;
 
@@ -869,6 +877,7 @@ const Game = (() => {
     targeting.onComplete(targeting.selected, { addPendingDeck });
     state.effects.targeting = null;
     state.effects.activeDeckId = null;
+    refreshPendingEffects();
 
     if (state.effects.pendingDecks.length === 0) {
       advancePhase();
