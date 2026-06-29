@@ -504,7 +504,8 @@ const Game = (() => {
     });
   }
 
-  function createPurchasePacks() {    return PURCHASE_PACK_SIZES.map((size, packIndex) => ({
+  function createPurchasePacks() {
+    return PURCHASE_PACK_SIZES.map((size, packIndex) => ({
       id: `turn-${state.turnNumber}-pack-${packIndex + 1}`,
       cards: Array.from({ length: size }, () => getRandomElement(PURCHASE_CARD_POOL, 'dirt')),
     }));
