@@ -307,8 +307,12 @@ const Game = (() => {
     state.players.forEach((player) => {
       const el = document.getElementById(`score-p${player.id}`);
       if (el) {
-        el.textContent = `🪙 ${player.coins}`;
-        el.setAttribute('aria-label', `Coins: ${player.coins}`);
+        const valueEl = el.querySelector('.score-value');
+        if (valueEl) {
+          valueEl.textContent = player.coins;
+        } else {
+          el.textContent = `🪙 ${player.coins}`;
+        }
       }
     });
   }
