@@ -311,9 +311,13 @@ const Game = (() => {
         if (valueEl) {
           valueEl.textContent = player.coins;
         } else {
-          el.innerHTML = '<span aria-hidden="true">🪙 </span><span class="score-value"></span>';
-          const createdValueEl = el.querySelector('.score-value');
-          if (createdValueEl) createdValueEl.textContent = player.coins;
+          const iconEl = document.createElement('span');
+          iconEl.setAttribute('aria-hidden', 'true');
+          iconEl.textContent = '🪙 ';
+          const createdValueEl = document.createElement('span');
+          createdValueEl.className = 'score-value';
+          createdValueEl.textContent = player.coins;
+          el.replaceChildren(iconEl, createdValueEl);
         }
       }
     });
