@@ -248,18 +248,19 @@ const Game = (() => {
       targeting: null,
       /** Cards temporarily replaced by a strawberry copy; reverted at end of turn. */
       strawberryReverts: [],
-    awardPurchase: {
-      purchased: [],
-    },
-    phases: [
-      { id: 'tilling', onEnter: enterTillingPhase },
-      { id: 'effects', onEnter: enterEffectsPhase },
-      { id: 'scoring', onEnter: enterScoringPhase },
-      { id: 'awardPurchase', onEnter: enterAwardPurchasePhase },
-      { id: 'purchase', onEnter: enterPurchasePhase },
-      { id: 'endTurn', onEnter: enterEndTurnPhase },
-    ]
-  }
+      awardPurchase: {
+        purchased: [],
+      },
+      phases: [
+        { id: 'tilling', onEnter: enterTillingPhase },
+        { id: 'effects', onEnter: enterEffectsPhase },
+        { id: 'scoring', onEnter: enterScoringPhase },
+        { id: 'awardPurchase', onEnter: enterAwardPurchasePhase },
+        { id: 'purchase', onEnter: enterPurchasePhase },
+        { id: 'endTurn', onEnter: enterEndTurnPhase },
+      ]
+    }
+  };
 
   // ── Utilities ────────────────────────────────────────────────────────────
 
