@@ -206,7 +206,7 @@ const Game = (() => {
       }),
     },
   };
-  const PURCHASE_CARD_POOL = Object.freeze(['dirt', ...Object.keys(CARD_TYPES)]);
+  const PURCHASE_CARD_POOL = Object.freeze([...Object.keys(CARD_TYPES)]);
 
   /** The six decks form a 3-column × 2-row grid; each entry lists deck indices in a row. */
   const GRID_ROWS = [[0, 1, 2], [3, 4, 5]];
@@ -222,12 +222,12 @@ const Game = (() => {
     ],
     /** Six decks – card contents to be defined later. */
     decks: [
-      { id: 1, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
-      { id: 2, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
-      { id: 3, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
-      { id: 4, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
-      { id: 5, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
-      { id: 6, cards: ['dirt', 'dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 1, cards: ['dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 2, cards: ['dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 3, cards: ['dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 4, cards: ['dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 5, cards: ['dirt', 'dirt', 'dirt', 'potato'] },
+      { id: 6, cards: ['dirt', 'dirt', 'dirt', 'potato'] },
     ],
     /** Cards currently available for the active player to choose from. */
     selectionArea: [],
@@ -357,17 +357,16 @@ const Game = (() => {
       labelEl.textContent = targeting.label;
       section.appendChild(labelEl);
 
-      if (targeting.confirmable) {
-        const confirmBtn = document.createElement('button');
-        confirmBtn.className = 'confirm-btn';
-        confirmBtn.textContent = 'Confirm';
-        confirmBtn.addEventListener('click', () => {
-          if (targeting.selected.length >= (targeting.minCount ?? 0)) {
-            completeTargeting();
-          }
-        });
-        section.appendChild(confirmBtn);
-      }
+      const confirmBtn = document.createElement('button');
+      confirmBtn.className = 'confirm-btn';
+      confirmBtn.textContent = 'Done';
+      confirmBtn.addEventListener('click', () => {
+        if (targeting.selected.length >= (targeting.minCount ?? 0)) {
+          completeTargeting();
+        }
+      });
+      section.appendChild(confirmBtn);
+      
       return;
     }
 
