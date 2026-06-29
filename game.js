@@ -203,6 +203,12 @@ const Game = (() => {
     },
   };
   const PURCHASE_CARD_POOL = Object.freeze([...Object.keys(CARD_TYPES)]);
+  const COMMON_SEED_PACK_CARD_TYPES = new Set(['potato', 'carrot', 'cabbage', 'radish', 'garlic']);
+  const SEED_PACK_CARD_POOL = Object.freeze(
+    PURCHASE_CARD_POOL.flatMap((cardType) => (COMMON_SEED_PACK_CARD_TYPES.has(cardType)
+      ? [cardType, cardType]
+      : [cardType]))
+  );
 
   /** The six decks form a 3-column × 2-row grid; each entry lists deck indices in a row. */
   const GRID_ROWS = [[0, 1, 2], [3, 4, 5]];
@@ -764,7 +770,7 @@ const Game = (() => {
   function createPurchasePacks() {
     return PURCHASE_PACK_SIZES.map((size, packIndex) => ({
       id: `turn-${state.turnNumber}-pack-${packIndex + 1}`,
-      cards: Array.from({ length: size }, () => getRandomElement(PURCHASE_CARD_POOL, 'dirt')),
+      cards: Array.from({ length: size }, () => getRandomElement(SEED_PACK_CARD_POOL, 'dirt')),
     }));
   }
 
