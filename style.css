@@ -252,6 +252,8 @@ body {
 .confirm-btn {
   background: #1a5c35;
   border: 2px solid #42a865;
+}
+
 /* ── Award purchase phase ── */
 #awards-column {
   position: fixed;
