@@ -86,6 +86,120 @@ const Game = (() => {
           return sum + (inRow === 3 ? 1 : 0);
         }, 0),
     },
+    strawberry: {
+      description: 'Effect: copy an adjacent vegetable',
+      coinValue: 0,
+      effect: (sourceDeckId) => {
+        const sourceIndex = sourceDeckId - 1;
+        return {
+          label: 'Select an adjacent vegetable to copy',
+          filter: (deckId) => {
+            const targetIndex = deckId - 1;
+            const adjacents = getAdjacentDeckIndices(sourceIndex);
+            const topCard = state.decks[targetIndex]?.cards[0];
+            return adjacents.includes(targetIndex) && !!CARD_TYPES[topCard] && topCard !== 'strawberry';
+          },
+          count: 1,
+          onComplete: (selectedIds, { addPendingDeck }) => {
+            const targetDeck = state.decks.find((d) => d.id === selectedIds[0]);
+            const copiedType = targetDeck?.cards[0];
+            if (!copiedType || !CARD_TYPES[copiedType]) return;
+            state.effects.strawberryReverts.push({ deckId: sourceDeckId, originalCard: 'strawberry' });
+            state.decks[sourceIndex].cards[0] = copiedType;
+            if (CARD_TYPES[copiedType]?.effect) {
+              addPendingDeck(sourceDeckId);
+            }
+            renderDecks();
+          },
+        };
+      },
+    },
+    ghostpepper: {
+      displayName: 'ghost pepper',
+      description: 'Effect: compost the top card of any plot',
+      coinValue: 0,
+      effect: (sourceDeckId) => ({
+        label: 'Select a plot to compost its top card',
+        filter: (deckId) => (state.decks.find((d) => d.id === deckId)?.cards.length ?? 0) > 0,
+        count: 1,
+        onComplete: (selectedIds) => {
+          const deck = state.decks.find((d) => d.id === selectedIds[0]);
+          if (deck && deck.cards.length > 0) {
+            deck.cards.shift();
+          }
+          renderDecks();
+        },
+      }),
+    },
+    eggplant: {
+      description: 'Effect: get a random card and bury it in any plot',
+      coinValue: 0,
+      effect: (sourceDeckId) => {
+        const randomCard = getRandomElement(PURCHASE_CARD_POOL, 'dirt');
+        return {
+          label: `Bury a ${getCardLabel(randomCard)} in any plot`,
+          count: 1,
+          onComplete: (selectedIds) => {
+            const deck = state.decks.find((d) => d.id === selectedIds[0]);
+            if (deck) deck.cards.push(randomCard);
+            renderDecks();
+          },
+        };
+      },
+    },
+    garlic: {
+      description: 'Effect: till two plots',
+      coinValue: 0,
+      effect: (sourceDeckId) => ({
+        label: 'Select two plots to till',
+        filter: (deckId) => {
+          const deck = state.decks.find((d) => d.id === deckId);
+          return (deck?.cards.length ?? 0) > 0
+            && !(state.effects.targeting?.selected ?? []).includes(deckId);
+        },
+        count: 2,
+        onComplete: (selectedIds, { addPendingDeck }) => {
+          selectedIds.forEach((deckId) => {
+            const deck = state.decks.find((d) => d.id === deckId);
+            if (deck && deck.cards.length > 0) {
+              deck.cards.push(deck.cards.shift());
+              const newTop = deck.cards[0];
+              if (newTop && CARD_TYPES[newTop]?.effect) {
+                addPendingDeck(deckId);
+              }
+            }
+          });
+          renderDecks();
+        },
+      }),
+    },
+    zucchini: {
+      description: 'Effect: shuffle any number of plots',
+      coinValue: 0,
+      effect: (sourceDeckId) => ({
+        label: 'Select plots to shuffle, then click Confirm',
+        filter: (deckId) => {
+          const deck = state.decks.find((d) => d.id === deckId);
+          return (deck?.cards.length ?? 0) > 0;
+        },
+        minCount: 0,
+        maxCount: Infinity,
+        confirmable: true,
+        onComplete: (selectedIds, { addPendingDeck }) => {
+          selectedIds.forEach((deckId) => {
+            const deck = state.decks.find((d) => d.id === deckId);
+            if (deck && deck.cards.length > 0) {
+              shuffle(deck.cards);
+              const newTop = deck.cards[0];
+              if (newTop && CARD_TYPES[newTop]?.effect) {
+                addPendingDeck(deckId);
+              }
+            }
+          });
+          renderDecks();
+        },
+      }),
+    },
   };
   const PURCHASE_CARD_POOL = Object.freeze(['dirt', ...Object.keys(CARD_TYPES)]);
 
@@ -120,8 +234,19 @@ const Game = (() => {
       awaitingHumanSelection: false,
       humanPackCards: [],
     },
+    effects: {
+      /** Deck ids (1-based) whose top card has an unresolved effect this turn. */
+      pendingDecks: [],
+      /** Deck id whose effect is currently being resolved (targeting in progress). */
+      activeDeckId: null,
+      /** Targeting sub-state while waiting for the player to pick decks. */
+      targeting: null,
+      /** Cards temporarily replaced by a strawberry copy; reverted at end of turn. */
+      strawberryReverts: [],
+    },
     phases: [
       { id: 'tilling', onEnter: enterTillingPhase },
+      { id: 'effects', onEnter: enterEffectsPhase },
       { id: 'scoring', onEnter: enterScoringPhase },
       { id: 'purchase', onEnter: enterPurchasePhase },
       { id: 'endTurn', onEnter: enterEndTurnPhase },
@@ -151,6 +276,21 @@ const Game = (() => {
     return CARD_TYPES[cardType]?.displayName ?? cardType;
   }
 
+  /**
+   * Return the deck indices (0-based) that are adjacent (share an edge) to the given index
+   * in the 3-column × 2-row grid.
+   */
+  function getAdjacentDeckIndices(deckIndex) {
+    const row = Math.floor(deckIndex / 3);
+    const col = deckIndex % 3;
+    const adjacents = [];
+    if (col > 0) adjacents.push(row * 3 + col - 1);
+    if (col < 2) adjacents.push(row * 3 + col + 1);
+    if (row > 0) adjacents.push((row - 1) * 3 + col);
+    if (row < 1) adjacents.push((row + 1) * 3 + col);
+    return adjacents;
+  }
+
   // ── Rendering ────────────────────────────────────────────────────────────
 
   /** Update every player's score display in the header. */
@@ -173,6 +313,11 @@ const Game = (() => {
       return;
     }
 
+    if (getCurrentPhaseId() === 'effects') {
+      renderEffectsSelectionArea(section);
+      return;
+    }
+
     if (state.selectionArea.length > 0) {
       state.selectionArea.forEach((card) => {
         const cardEl = createCardElement(card);
@@ -186,6 +331,37 @@ const Game = (() => {
       tillBtn.textContent = 'Till';
       tillBtn.addEventListener('click', till);
       section.appendChild(tillBtn);
+    }
+  }
+
+  function renderEffectsSelectionArea(section) {
+    const { targeting, pendingDecks } = state.effects;
+
+    if (targeting) {
+      const labelEl = document.createElement('p');
+      labelEl.className = 'effects-label';
+      labelEl.textContent = targeting.label;
+      section.appendChild(labelEl);
+
+      if (targeting.confirmable) {
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = 'confirm-btn';
+        confirmBtn.textContent = 'Confirm';
+        confirmBtn.addEventListener('click', () => {
+          if (targeting.selected.length >= (targeting.minCount ?? 0)) {
+            completeTargeting();
+          }
+        });
+        section.appendChild(confirmBtn);
+      }
+      return;
+    }
+
+    if (pendingDecks.length > 0) {
+      const labelEl = document.createElement('p');
+      labelEl.className = 'effects-label';
+      labelEl.textContent = 'Click a highlighted plot to use its effect.';
+      section.appendChild(labelEl);
     }
   }
 
@@ -230,9 +406,25 @@ const Game = (() => {
 
   /** Update each deck face to show the top card name and its description (if any). */
   function renderDecks() {
+    const isEffectsPhase = getCurrentPhaseId() === 'effects';
+    const { pendingDecks, activeDeckId, targeting } = state.effects;
+
     state.decks.forEach((deck) => {
       const deckEl = document.getElementById(`deck-${deck.id}`);
       if (!deckEl) return;
+
+      // Update effects-phase CSS classes.
+      deckEl.classList.toggle('deck--highlighted', isEffectsPhase && pendingDecks.includes(deck.id));
+      deckEl.classList.toggle('deck--active-effect', isEffectsPhase && activeDeckId === deck.id);
+      deckEl.classList.toggle(
+        'deck--targetable',
+        isEffectsPhase && !!targeting && (!targeting.filter || targeting.filter(deck.id)),
+      );
+      deckEl.classList.toggle(
+        'deck--selected-target',
+        isEffectsPhase && !!targeting && targeting.selected.includes(deck.id),
+      );
+
       const face = deckEl.querySelector('.deck-face');
       const label = deckEl.querySelector('.deck-label');
       if (label) {
@@ -389,7 +581,26 @@ const Game = (() => {
   }
 
   function enterTillingPhase() {
-    // Wait for player action in the till button.
+    // Wait for player action via the till button.
+  }
+
+  function enterEffectsPhase() {
+    state.effects.pendingDecks = state.decks
+      .filter((deck) => {
+        const top = deck.cards[0];
+        return top && CARD_TYPES[top]?.effect;
+      })
+      .map((deck) => deck.id);
+    state.effects.activeDeckId = null;
+    state.effects.targeting = null;
+
+    if (state.effects.pendingDecks.length === 0) {
+      advancePhase();
+      return;
+    }
+
+    renderDecks();
+    renderSelectionArea();
   }
 
   function enterScoringPhase() {
@@ -502,6 +713,15 @@ const Game = (() => {
   }
 
   function enterEndTurnPhase() {
+    // Revert any temporary strawberry copies before scoring next turn.
+    state.effects.strawberryReverts.forEach(({ deckId, originalCard }) => {
+      const deck = state.decks.find((d) => d.id === deckId);
+      if (deck && deck.cards.length > 0) {
+        deck.cards[0] = originalCard;
+      }
+    });
+    state.effects.strawberryReverts = [];
+
     state.players.forEach((player) => {
       player.coins = 0;
     });
@@ -527,6 +747,87 @@ const Game = (() => {
     if (getCurrentPhaseId() !== 'tilling') return;
     tillDecks();
     advancePhase();
+  }
+
+  /** Finish the current targeting interaction and execute the effect's onComplete. */
+  function completeTargeting() {
+    const { targeting } = state.effects;
+    if (!targeting) return;
+
+    const addPendingDeck = (deckId) => {
+      if (!state.effects.pendingDecks.includes(deckId)) {
+        state.effects.pendingDecks.push(deckId);
+      }
+    };
+
+    targeting.onComplete(targeting.selected, { addPendingDeck });
+    state.effects.targeting = null;
+    state.effects.activeDeckId = null;
+
+    if (state.effects.pendingDecks.length === 0) {
+      advancePhase();
+    } else {
+      renderDecks();
+      renderSelectionArea();
+    }
+  }
+
+  /** Handle a deck click during the effects phase. */
+  function onEffectsDeckClick(deckId) {
+    const { pendingDecks, targeting } = state.effects;
+
+    if (targeting) {
+      const isValid = !targeting.filter || targeting.filter(deckId);
+      if (!isValid) return;
+
+      // For confirmable multi-select, toggle selection; for exact-count, only add.
+      if (targeting.confirmable) {
+        if (targeting.selected.includes(deckId)) {
+          targeting.selected = targeting.selected.filter((id) => id !== deckId);
+        } else {
+          targeting.selected.push(deckId);
+        }
+      } else {
+        if (!targeting.selected.includes(deckId)) {
+          targeting.selected.push(deckId);
+        }
+      }
+
+      // Auto-complete when the exact required count is reached.
+      const exactCount = targeting.count;
+      if (exactCount !== undefined && targeting.selected.length >= exactCount) {
+        completeTargeting();
+        return;
+      }
+
+      renderDecks();
+      renderSelectionArea();
+      return;
+    }
+
+    // No active targeting – start an effect if the clicked deck is pending.
+    if (!pendingDecks.includes(deckId)) return;
+    const deck = state.decks.find((d) => d.id === deckId);
+    const topCard = deck?.cards[0];
+    const cardType = CARD_TYPES[topCard];
+    if (!cardType?.effect) return;
+
+    const descriptor = cardType.effect(deckId);
+    state.effects.activeDeckId = deckId;
+    state.effects.pendingDecks = pendingDecks.filter((id) => id !== deckId);
+    state.effects.targeting = {
+      label: descriptor.label ?? 'Select a target',
+      filter: descriptor.filter ?? null,
+      count: descriptor.count,
+      minCount: descriptor.minCount ?? descriptor.count ?? 1,
+      maxCount: descriptor.maxCount ?? descriptor.count ?? 1,
+      confirmable: descriptor.confirmable ?? false,
+      selected: [],
+      onComplete: descriptor.onComplete,
+    };
+
+    renderDecks();
+    renderSelectionArea();
   }
 
   // ── Event wiring ─────────────────────────────────────────────────────────
@@ -561,10 +862,13 @@ const Game = (() => {
 
   /**
    * Called when a player clicks a deck.
-   * Replace with game logic once card content is defined.
    * @param {number} deckId
    */
   function onDeckClick(deckId) {
+    if (getCurrentPhaseId() === 'effects') {
+      onEffectsDeckClick(deckId);
+      return;
+    }
     console.log(`Deck ${deckId} clicked`);
   }
 

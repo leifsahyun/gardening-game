@@ -216,3 +216,53 @@ body {
 .till-btn:hover {
   background: #7b4f2e;
 }
+
+/* ── Effects phase deck states ── */
+.deck--highlighted .deck-face {
+  border-color: #f5d742;
+  box-shadow: 0 0 14px #f5d742, 3px 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.deck--active-effect .deck-face {
+  border-color: #f57c42;
+  box-shadow: 0 0 12px #f57c42, 3px 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.deck--targetable .deck-face {
+  border-color: #42aaf5;
+  box-shadow: 0 0 10px #42aaf5, 3px 4px 8px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+
+.deck--selected-target .deck-face {
+  border-color: #42f57e;
+  box-shadow: 0 0 12px #42f57e, 3px 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Effects phase selection area ── */
+.effects-label {
+  color: #f5f0e8;
+  font-size: 0.95rem;
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  user-select: none;
+}
+
+.confirm-btn {
+  background: #1a5c35;
+  border: 2px solid #42a865;
+  border-radius: 6px;
+  color: #f5f0e8;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.5rem 1.4rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.15s ease;
+}
+
+.confirm-btn:hover {
+  background: #276b44;
+}
