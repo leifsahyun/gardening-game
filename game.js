@@ -361,9 +361,7 @@ const Game = (() => {
       confirmBtn.className = 'confirm-btn';
       confirmBtn.textContent = 'Done';
       confirmBtn.addEventListener('click', () => {
-        if (targeting.selected.length >= (targeting.minCount ?? 0)) {
-          completeTargeting();
-        }
+        completeTargeting();
       });
       section.appendChild(confirmBtn);
       
