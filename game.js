@@ -302,23 +302,26 @@ const Game = (() => {
 
   // ── Rendering ────────────────────────────────────────────────────────────
 
+  function ensureScoreValueElement(scoreEl) {
+    const existingValueEl = scoreEl.querySelector('.score-value');
+    if (existingValueEl) return existingValueEl;
+
+    const iconEl = document.createElement('span');
+    iconEl.setAttribute('aria-hidden', 'true');
+    iconEl.textContent = '🪙 ';
+    const valueEl = document.createElement('span');
+    valueEl.className = 'score-value';
+    scoreEl.replaceChildren(iconEl, valueEl);
+    return valueEl;
+  }
+
   /** Update every player's score display in the header. */
   function renderScores() {
     state.players.forEach((player) => {
       const el = document.getElementById(`score-p${player.id}`);
       if (el) {
-        const valueEl = el.querySelector('.score-value');
-        if (valueEl) {
-          valueEl.textContent = player.coins;
-        } else {
-          const iconEl = document.createElement('span');
-          iconEl.setAttribute('aria-hidden', 'true');
-          iconEl.textContent = '🪙 ';
-          const createdValueEl = document.createElement('span');
-          createdValueEl.className = 'score-value';
-          createdValueEl.textContent = player.coins;
-          el.replaceChildren(iconEl, createdValueEl);
-        }
+        const valueEl = ensureScoreValueElement(el);
+        valueEl.textContent = player.coins;
       }
     });
   }
