@@ -328,6 +328,12 @@ const Game = (() => {
     });
   }
 
+  /** Update the turn counter display. */
+  function renderTurnCounter() {
+    const el = document.getElementById('turn-number');
+    if (el) el.textContent = state.turnNumber;
+  }
+
   /** Re-render the card selection area. */
   function renderSelectionArea() {
     const section = document.getElementById('selection-area');
@@ -871,6 +877,7 @@ const Game = (() => {
     renderScores();
 
     state.turnNumber += 1;
+    renderTurnCounter();
     startTurn();
   }
 
@@ -1021,6 +1028,7 @@ const Game = (() => {
   function init() {
     state.decks.forEach((deck) => shuffle(deck.cards));
     renderScores();
+    renderTurnCounter();
     renderDecks();
     bindDeckClicks();
     bindDeckDrops();

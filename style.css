@@ -45,6 +45,21 @@ body {
   color: #f5f0e8;
 }
 
+/* ── Turn counter ── */
+#turn-counter {
+  align-self: flex-start;
+  background: #1a3a17;
+  color: #b8d4b5;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.75rem;
+  border-bottom: 2px solid #4a8c42;
+  border-right: 2px solid #4a8c42;
+  border-radius: 0 0 6px 0;
+}
+
 /* ── Main game area ── */
 #game-area {
   flex: 1;
