@@ -385,6 +385,11 @@ const Game = (() => {
         const cardEl = createCardElement(card, { draggable: true });
         section.appendChild(cardEl);
       });
+
+      const reminderEl = document.createElement('p');
+      reminderEl.className = 'plant-reminder-text';
+      reminderEl.textContent = 'Drag cards to plots to plant them';
+      section.appendChild(reminderEl);
       return;
     }
 
