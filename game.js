@@ -603,6 +603,12 @@ const Game = (() => {
     return !!(topCard && CARD_TYPES[topCard]?.effect);
   }
 
+  function getPendingEffectDeckIds() {
+    return state.decks
+      .filter((deck) => deckHasPendingEffect(deck.id))
+      .map((deck) => deck.id);
+  }
+
   function refreshPendingEffects() {
     state.effects.pendingDecks = state.effects.pendingDecks
       .filter((deckId) => deckHasPendingEffect(deckId));
@@ -613,8 +619,7 @@ const Game = (() => {
   }
 
   function enterEffectsPhase() {
-    state.effects.pendingDecks = state.decks.map((deck) => deck.id);
-    refreshPendingEffects();
+    state.effects.pendingDecks = getPendingEffectDeckIds();
     state.effects.activeDeckId = null;
     state.effects.targeting = null;
 
