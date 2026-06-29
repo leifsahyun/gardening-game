@@ -250,7 +250,7 @@ const Game = (() => {
       if (cardType) {
         face.textContent = '';
         const nameEl = document.createElement('div');
-        nameEl.className = 'deck-card-name';
+        nameEl.className = 'card-name';
         nameEl.textContent = getCardLabel(topCard);
         const descEl = document.createElement('small');
         descEl.textContent = cardType.description;
@@ -271,7 +271,19 @@ const Game = (() => {
     const el = document.createElement('div');
     el.className = 'card';
     el.dataset.cardId = card.id;
-    el.textContent = card.text ?? '';
+
+    const cardType = CARD_TYPES[card.cardType];
+    if (cardType) {
+      const nameEl = document.createElement('div');
+      nameEl.className = 'card-name';
+      nameEl.textContent = card.text ?? getCardLabel(card.cardType);
+      const descEl = document.createElement('small');
+      descEl.textContent = cardType.description;
+      el.appendChild(nameEl);
+      el.appendChild(descEl);
+    } else {
+      el.textContent = card.text ?? '';
+    }
     if (options.draggable) {
       el.draggable = true;
       el.addEventListener('dragstart', (event) => {
