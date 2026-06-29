@@ -97,7 +97,7 @@ const Game = (() => {
             const targetIndex = deckId - 1;
             const adjacents = getAdjacentDeckIndices(sourceIndex);
             const topCard = state.decks[targetIndex]?.cards[0];
-            return adjacents.includes(targetIndex) && !!CARD_TYPES[topCard] && topCard !== 'strawberry';
+            return adjacents.includes(targetIndex) && !!topCard && !!CARD_TYPES[topCard] && topCard !== 'strawberry';
           },
           count: 1,
           onComplete: (selectedIds, { addPendingDeck }) => {
