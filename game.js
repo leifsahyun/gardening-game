@@ -15,25 +15,82 @@ const Game = (() => {
 
   /**
    * Defines scoring behaviour and display description for each card type.
-   * coinValue  – coins awarded per card when it is the top card of a deck.
-   * pairBonus  – extra coins awarded when 2+ cards of this type appear as top
-   *              cards in the same grid column.
+   * coinValue   – base coins awarded per card when it is the top card of a deck.
+   * scoreBonus  – optional function called once per visible card type; receives
+   *               (count, garden) where count is the number of this type visible
+   *               and garden is a 3×2 array of card-type strings (garden[row][col],
+   *               null for an empty deck). Returns additional coins beyond coinValue.
    * description – text shown on the card face below the card name.
    */
   const CARD_TYPES = {
     potato: {
       description: '1 coin, pair: +2 coins',
       coinValue: 1,
-      pairBonus: 2,
+      scoreBonus: (count, garden) =>
+        [0, 1, 2].reduce((sum, col) => {
+          const inCol = garden.filter((row) => row[col] === 'potato').length;
+          return sum + (inCol >= 2 ? 2 : 0);
+        }, 0),
+    },
+    carrot: {
+      description: '1 coin, three in a row: +6 coins',
+      coinValue: 1,
+      scoreBonus: (count, garden) =>
+        garden.reduce((sum, row) => {
+          const inRow = row.filter((c) => c === 'carrot').length;
+          return sum + (inRow === 3 ? 6 : 0);
+        }, 0),
+    },
+    cabbage: {
+      description: '3 coins',
+      coinValue: 3,
+    },
+    horseradish: {
+      description: '2 coins, +1 coin for each potato in garden',
+      coinValue: 2,
+      scoreBonus: (count, garden) =>
+        count * garden.flat().filter((c) => c === 'potato').length,
+    },
+    greenbeans: {
+      displayName: 'green beans',
+      description: '2 coins, pair: +1 coin',
+      coinValue: 2,
+      scoreBonus: (count, garden) =>
+        [0, 1, 2].reduce((sum, col) => {
+          const inCol = garden.filter((row) => row[col] === 'greenbeans').length;
+          return sum + (inCol >= 2 ? 1 : 0);
+        }, 0),
+    },
+    pumpkin: {
+      description: '5 coins if exactly one in your garden',
+      coinValue: 0,
+      scoreBonus: (count) => (count === 1 ? 5 : 0),
+    },
+    radish: {
+      description: '1 coin, +3 coins if three different vegetables in same row',
+      coinValue: 1,
+      scoreBonus: (count, garden) =>
+        garden.reduce((sum, row) => {
+          const hasRadish = row.includes('radish');
+          const threeDifferentVegetables = row.every((c) => CARD_TYPES[c])
+            && new Set(row).size === 3;
+          return sum + (hasRadish && threeDifferentVegetables ? 3 : 0);
+        }, 0),
+    },
+    beet: {
+      description: '2 coins, three in a row: +1 coin',
+      coinValue: 2,
+      scoreBonus: (count, garden) =>
+        garden.reduce((sum, row) => {
+          const inRow = row.filter((c) => c === 'beet').length;
+          return sum + (inRow === 3 ? 1 : 0);
+        }, 0),
     },
   };
   const PURCHASE_CARD_POOL = Object.freeze(['dirt', ...Object.keys(CARD_TYPES)]);
 
-  /**
-   * The six decks form a 3-column × 2-row grid.
-   * Each entry lists the indices (into state.decks) that share a column.
-   */
-  const GRID_COLUMNS = [[0, 3], [1, 4], [2, 5]];
+  /** The six decks form a 3-column × 2-row grid; each entry lists deck indices in a row. */
+  const GRID_ROWS = [[0, 1, 2], [3, 4, 5]];
 
   // ── State ────────────────────────────────────────────────────────────────
 
@@ -88,6 +145,10 @@ const Game = (() => {
   function getRandomElement(array, fallback = '') {
     if (array.length === 0) return fallback;
     return array[randomInt(0, array.length - 1)];
+  }
+
+  function getCardLabel(cardType) {
+    return CARD_TYPES[cardType]?.displayName ?? cardType;
   }
 
   // ── Rendering ────────────────────────────────────────────────────────────
@@ -154,7 +215,7 @@ const Game = (() => {
 
       const topText = document.createElement('div');
       topText.className = 'purchase-pack-top-card';
-      topText.textContent = pack.cards[0];
+      topText.textContent = getCardLabel(pack.cards[0]);
 
       const sizeText = document.createElement('div');
       sizeText.className = 'purchase-pack-size';
@@ -190,7 +251,7 @@ const Game = (() => {
         face.textContent = '';
         const nameEl = document.createElement('div');
         nameEl.className = 'deck-card-name';
-        nameEl.textContent = topCard;
+        nameEl.textContent = getCardLabel(topCard);
         const descEl = document.createElement('small');
         descEl.textContent = cardType.description;
         face.appendChild(nameEl);
@@ -235,38 +296,39 @@ const Game = (() => {
     return state.players.find((player) => !player.isAi) ?? null;
   }
 
-  /**
-   * Score a single grid column.
-   * Awards each card's coinValue and a pairBonus when ≥2 of the same card type
-   * appear as the top card in that column.
-   * @param {number[]} columnDeckIndices – indices into state.decks
-   * @returns {number}
-   */
-  function scoreColumn(columnDeckIndices) {
-    const columnDecks = columnDeckIndices
-      .map((i) => state.decks[i])
-      .filter((deck) => deck?.cards);
-    let coins = 0;
+  function countTypes(cards) {
     const typeCounts = {};
-    columnDecks.forEach((deck) => {
-      const topCard = deck.cards[0];
-      if (!topCard) return;
-      const cardType = CARD_TYPES[topCard];
-      if (!cardType) return;
-      coins += cardType.coinValue;
-      typeCounts[topCard] = (typeCounts[topCard] ?? 0) + 1;
+    cards.forEach((card) => {
+      typeCounts[card] = (typeCounts[card] ?? 0) + 1;
     });
-    Object.entries(typeCounts).forEach(([type, count]) => {
-      if (count >= 2 && CARD_TYPES[type].pairBonus) {
-        coins += CARD_TYPES[type].pairBonus;
-      }
-    });
-    return coins;
+    return typeCounts;
   }
 
-  /** Sum coins earned across all grid columns this scoring phase. */
+  /**
+   * Build the garden passed to each card type's scoreBonus function.
+   * Returns a 3×2 array of card-type strings: garden[row][col].
+   * Decks with no cards produce a null entry.
+   */
+  function buildGarden() {
+    return GRID_ROWS.map((row) => row.map((i) => state.decks[i]?.cards[0] ?? null));
+  }
+
+  /** Sum coins earned across all top cards this scoring phase. */
   function countTotalCoins() {
-    return GRID_COLUMNS.reduce((total, col) => total + scoreColumn(col), 0);
+    const garden = buildGarden();
+    const allCards = garden.flat().filter((c) => c && CARD_TYPES[c]);
+    const typeCounts = countTypes(allCards);
+
+    let total = allCards.reduce((sum, card) => sum + CARD_TYPES[card].coinValue, 0);
+
+    Object.entries(typeCounts).forEach(([type, count]) => {
+      const cardType = CARD_TYPES[type];
+      if (cardType?.scoreBonus) {
+        total += cardType.scoreBonus(count, garden);
+      }
+    });
+
+    return total;
   }
 
   function animatePlayerCoins(player, targetCoins, onComplete) {
@@ -401,7 +463,8 @@ const Game = (() => {
     state.purchase.availablePacks = [];
     state.purchase.humanPackCards = selectedPack.cards.map((cardType, index) => ({
       id: `${selectedPack.id}-card-${index}`,
-      text: cardType,
+      cardType,
+      text: getCardLabel(cardType),
     }));
     renderSelectionArea();
   }
@@ -415,7 +478,7 @@ const Game = (() => {
     const deck = state.decks.find((candidate) => candidate.id === deckId);
     if (!deck) return;
 
-    deck.cards.push(card.text);
+    deck.cards.push(card.cardType);
     renderDecks();
 
     if (state.purchase.humanPackCards.length === 0) {
