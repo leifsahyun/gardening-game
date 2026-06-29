@@ -71,7 +71,8 @@ body {
   padding: 1rem;
 }
 
-#selection-area .placeholder-text {
+#selection-area .placeholder-text,
+#selection-area .plant-reminder-text {
   color: #7aac75;
   font-style: italic;
   user-select: none;
@@ -81,11 +82,7 @@ body {
 #selection-area .plant-reminder-text {
   width: 100%;
   text-align: center;
-  color: #7aac75;
-  font-style: italic;
   font-size: 0.9rem;
-  user-select: none;
-  pointer-events: none;
 }
 
 /* ── Deck grid: 3 columns × 2 rows ── */
