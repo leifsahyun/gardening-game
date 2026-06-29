@@ -78,6 +78,16 @@ body {
   pointer-events: none;
 }
 
+#selection-area .plant-reminder-text {
+  width: 100%;
+  text-align: center;
+  color: #7aac75;
+  font-style: italic;
+  font-size: 0.9rem;
+  user-select: none;
+  pointer-events: none;
+}
+
 /* ── Deck grid: 3 columns × 2 rows ── */
 #deck-grid {
   display: grid;
@@ -145,8 +155,8 @@ body {
   font-weight: 600;
   text-align: center;
   padding: 0.5rem;
-  min-width: 60px;
-  min-height: 90px;
+  width: 120px;
+  min-height: 160px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -273,12 +283,7 @@ body {
   font-size: 0.8rem;
   font-weight: 600;
   min-width: 130px;
-  margin-top: -10px;
   box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.45);
-}
-
-.award-column-card:first-child {
-  margin-top: 0;
 }
 
 .award-column-card-name {
