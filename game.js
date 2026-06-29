@@ -258,8 +258,8 @@ const Game = (() => {
       { id: 'awardPurchase', onEnter: enterAwardPurchasePhase },
       { id: 'purchase', onEnter: enterPurchasePhase },
       { id: 'endTurn', onEnter: enterEndTurnPhase },
-    ],
-  };
+    ]
+  }
 
   // ── Utilities ────────────────────────────────────────────────────────────
 
