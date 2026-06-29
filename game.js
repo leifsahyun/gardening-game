@@ -127,10 +127,12 @@ const Game = (() => {
         label: 'Select a plot to compost its top card',
         filter: (deckId) => (state.decks.find((d) => d.id === deckId)?.cards.length ?? 0) > 0,
         count: 1,
-        onComplete: (selectedIds) => {
-          const deck = state.decks.find((d) => d.id === selectedIds[0]);
+        onComplete: (selectedIds, { addPendingDeck }) => {
+          const targetDeckId = selectedIds[0];
+          const deck = state.decks.find((d) => d.id === targetDeckId);
           if (deck && deck.cards.length > 0) {
             deck.cards.shift();
+            queueDeckIfTopCardHasEffect(targetDeckId, addPendingDeck);
           }
           renderDecks();
         },
@@ -168,10 +170,7 @@ const Game = (() => {
             const deck = state.decks.find((d) => d.id === deckId);
             if (deck && deck.cards.length > 0) {
               deck.cards.push(deck.cards.shift());
-              const newTop = deck.cards[0];
-              if (newTop && CARD_TYPES[newTop]?.effect) {
-                addPendingDeck(deckId);
-              }
+              queueDeckIfTopCardHasEffect(deckId, addPendingDeck);
             }
           });
           renderDecks();
@@ -195,10 +194,7 @@ const Game = (() => {
             const deck = state.decks.find((d) => d.id === deckId);
             if (deck && deck.cards.length > 0) {
               shuffle(deck.cards);
-              const newTop = deck.cards[0];
-              if (newTop && CARD_TYPES[newTop]?.effect) {
-                addPendingDeck(deckId);
-              }
+              queueDeckIfTopCardHasEffect(deckId, addPendingDeck);
             }
           });
           renderDecks();
@@ -600,6 +596,13 @@ const Game = (() => {
   function deckHasPendingEffect(deck) {
     const topCard = deck?.cards[0];
     return !!(topCard && CARD_TYPES[topCard]?.effect);
+  }
+
+  function queueDeckIfTopCardHasEffect(deckId, addPendingDeck) {
+    const deck = state.decks.find((candidate) => candidate.id === deckId);
+    if (deckHasPendingEffect(deck)) {
+      addPendingDeck(deckId);
+    }
   }
 
   function getPendingEffectDeckIds() {
