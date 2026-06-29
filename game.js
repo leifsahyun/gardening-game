@@ -604,9 +604,8 @@ const Game = (() => {
   }
 
   function refreshPendingEffects() {
-    state.effects.pendingDecks = [...new Set(
-      state.effects.pendingDecks.filter((deckId) => deckHasPendingEffect(deckId)),
-    )];
+    state.effects.pendingDecks = state.effects.pendingDecks
+      .filter((deckId) => deckHasPendingEffect(deckId));
   }
 
   function enterTillingPhase() {
