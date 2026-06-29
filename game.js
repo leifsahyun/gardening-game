@@ -583,6 +583,7 @@ const Game = (() => {
   }
 
   function runCurrentPhase() {
+    renderDecks();
     renderSelectionArea();
     const phase = getCurrentPhase();
     if (!phase) return;
