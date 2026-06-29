@@ -288,6 +288,38 @@ body {
   z-index: 10;
 }
 
+#order-of-play-panel {
+  position: fixed;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 220px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  z-index: 11;
+  backdrop-filter: blur(2px);
+}
+
+#order-of-play-panel summary {
+  cursor: pointer;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.65rem 0.8rem;
+  user-select: none;
+}
+
+#order-of-play-panel summary::marker {
+  color: #fff;
+}
+
+.order-of-play-content {
+  min-height: 160px;
+  padding: 0 0.8rem 0.8rem;
+}
+
 .award-column-card {
   background: #1a4a7a;
   border: 2px solid #2e7bb8;
