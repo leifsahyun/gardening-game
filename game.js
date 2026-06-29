@@ -306,7 +306,10 @@ const Game = (() => {
   function renderScores() {
     state.players.forEach((player) => {
       const el = document.getElementById(`score-p${player.id}`);
-      if (el) el.textContent = `🪙 ${player.coins}`;
+      if (el) {
+        el.textContent = `🪙 ${player.coins}`;
+        el.setAttribute('aria-label', `Coins: ${player.coins}`);
+      }
     });
   }
 
