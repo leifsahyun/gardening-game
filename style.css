@@ -216,3 +216,125 @@ body {
 .till-btn:hover {
   background: #7b4f2e;
 }
+
+/* ── Award purchase phase ── */
+#awards-column {
+  position: fixed;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.award-column-card {
+  background: #1a4a7a;
+  border: 2px solid #2e7bb8;
+  border-radius: 6px;
+  color: #f5f0e8;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 130px;
+  margin-top: -10px;
+  box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+.award-column-card:first-child {
+  margin-top: 0;
+}
+
+.award-column-card-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 0.15rem;
+}
+
+.award-column-card-vp {
+  font-size: 0.7rem;
+  color: #a8d4f0;
+}
+
+.award-card-btn {
+  background: #1a4a7a;
+  border: 3px solid #2e7bb8;
+  border-radius: 8px;
+  box-shadow: 3px 4px 8px rgba(0, 0, 0, 0.4);
+  color: #f5f0e8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  width: 120px;
+  min-height: 160px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.award-card-btn:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow: 3px 8px 14px rgba(0, 0, 0, 0.45);
+}
+
+.award-card-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.award-card-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.award-card-vp {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #a8d4f0;
+}
+
+.award-card-cost {
+  font-size: 0.75rem;
+  color: #d0e8f8;
+  letter-spacing: 0.03em;
+}
+
+.award-phase-footer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.25rem;
+}
+
+.award-reminder-text {
+  font-size: 0.8rem;
+  color: #7aac75;
+  font-style: italic;
+  text-align: right;
+}
+
+.award-done-btn {
+  background: #4a2a10;
+  border: 2px solid #7b4f2e;
+  border-radius: 6px;
+  color: #f5f0e8;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.5rem 1.2rem;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.award-done-btn:hover {
+  background: #7b4f2e;
+}

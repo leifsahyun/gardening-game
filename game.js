@@ -10,6 +10,11 @@ const Game = (() => {
   const MIN_AI_COINS = 1;
   const MAX_AI_COINS = 12;
   const PURCHASE_PACK_SIZES = [4, 3, 3, 2];
+  const AWARD_CARDS = [
+    { id: 'participation', name: 'Participation Certificate', vp: 1, cost: 5 },
+    { id: 'merit', name: 'Merit Award', vp: 3, cost: 10 },
+    { id: 'blueRibbon', name: 'Blue Ribbon', vp: 6, cost: 15 },
+  ];
 
   // ── Card types ───────────────────────────────────────────────────────────
 
@@ -120,9 +125,13 @@ const Game = (() => {
       awaitingHumanSelection: false,
       humanPackCards: [],
     },
+    awardPurchase: {
+      purchased: [],
+    },
     phases: [
       { id: 'tilling', onEnter: enterTillingPhase },
       { id: 'scoring', onEnter: enterScoringPhase },
+      { id: 'awardPurchase', onEnter: enterAwardPurchasePhase },
       { id: 'purchase', onEnter: enterPurchasePhase },
       { id: 'endTurn', onEnter: enterEndTurnPhase },
     ],
@@ -167,6 +176,11 @@ const Game = (() => {
     if (!section) return;
 
     section.innerHTML = '';
+
+    if (getCurrentPhaseId() === 'awardPurchase') {
+      renderAwardPurchaseSelectionArea(section);
+      return;
+    }
 
     if (getCurrentPhaseId() === 'purchase') {
       renderPurchaseSelectionArea(section);
@@ -411,6 +425,95 @@ const Game = (() => {
 
     const earnedCoins = countTotalCoins();
     animatePlayerCoins(player, earnedCoins, onScoringComplete);
+  }
+
+  function enterAwardPurchasePhase() {
+    // UI is rendered by renderSelectionArea.
+  }
+
+  function renderAwardPurchaseSelectionArea(section) {
+    const humanPlayer = getHumanPlayer();
+
+    AWARD_CARDS.forEach((award) => {
+      const btn = document.createElement('button');
+      btn.className = 'award-card-btn';
+      btn.type = 'button';
+
+      const canAfford = humanPlayer && humanPlayer.coins >= award.cost;
+      if (!canAfford) btn.disabled = true;
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'award-card-name';
+      nameEl.textContent = award.name;
+
+      const vpEl = document.createElement('div');
+      vpEl.className = 'award-card-vp';
+      vpEl.textContent = `${award.vp} VP`;
+
+      const costEl = document.createElement('div');
+      costEl.className = 'award-card-cost';
+      costEl.textContent = `Cost: ${award.cost} coins`;
+
+      btn.appendChild(nameEl);
+      btn.appendChild(vpEl);
+      btn.appendChild(costEl);
+      btn.addEventListener('click', () => onAwardCardClick(award.id));
+      section.appendChild(btn);
+    });
+
+    const footer = document.createElement('div');
+    footer.className = 'award-phase-footer';
+
+    const reminderText = document.createElement('p');
+    reminderText.className = 'award-reminder-text';
+    reminderText.textContent = 'Players with the most remaining coins will select seed packs first';
+
+    const doneBtn = document.createElement('button');
+    doneBtn.className = 'award-done-btn';
+    doneBtn.type = 'button';
+    doneBtn.textContent = 'Done';
+    doneBtn.addEventListener('click', advancePhase);
+
+    footer.appendChild(reminderText);
+    footer.appendChild(doneBtn);
+    section.appendChild(footer);
+  }
+
+  function onAwardCardClick(awardId) {
+    if (getCurrentPhaseId() !== 'awardPurchase') return;
+    const award = AWARD_CARDS.find((a) => a.id === awardId);
+    if (!award) return;
+    const humanPlayer = getHumanPlayer();
+    if (!humanPlayer || humanPlayer.coins < award.cost) return;
+
+    humanPlayer.coins -= award.cost;
+    state.awardPurchase.purchased.push({ ...award });
+    renderScores();
+    renderAwardsColumn();
+    renderSelectionArea();
+  }
+
+  function renderAwardsColumn() {
+    const col = document.getElementById('awards-column');
+    if (!col) return;
+    col.innerHTML = '';
+
+    state.awardPurchase.purchased.forEach((award) => {
+      const card = document.createElement('div');
+      card.className = 'award-column-card';
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'award-column-card-name';
+      nameEl.textContent = award.name;
+
+      const vpEl = document.createElement('div');
+      vpEl.className = 'award-column-card-vp';
+      vpEl.textContent = `${award.vp} VP`;
+
+      card.appendChild(nameEl);
+      card.appendChild(vpEl);
+      col.appendChild(card);
+    });
   }
 
   function createPurchasePacks() {
