@@ -311,7 +311,9 @@ const Game = (() => {
         if (valueEl) {
           valueEl.textContent = player.coins;
         } else {
-          el.textContent = `🪙 ${player.coins}`;
+          el.innerHTML = '<span aria-hidden="true">🪙 </span><span class="score-value"></span>';
+          const createdValueEl = el.querySelector('.score-value');
+          if (createdValueEl) createdValueEl.textContent = player.coins;
         }
       }
     });
