@@ -291,9 +291,8 @@ body {
 #order-of-play-panel {
   position: fixed;
   right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 220px;
+  top: 4.75rem;
+  width: min(320px, calc(100vw - 2rem));
   background: rgba(0, 0, 0, 0.45);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
@@ -318,6 +317,19 @@ body {
 .order-of-play-content {
   min-height: 160px;
   padding: 0 0.8rem 0.8rem;
+}
+
+.order-of-play-content ol {
+  padding-inline-start: 1.5rem;
+}
+
+.order-of-play-content ol ol {
+  margin-top: 0.35rem;
+  padding-inline-start: 1.5rem;
+}
+
+.order-of-play-content li + li {
+  margin-top: 0.45rem;
 }
 
 .award-column-card {
