@@ -29,7 +29,7 @@ const Game = (() => {
    */
   const CARD_TYPES = {
     potato: {
-      description: '1 coin, pair: +2 coins',
+      description: '1 coin, pair in column: +2 coins',
       coinValue: 1,
       scoreBonus: (count, garden) =>
         [0, 1, 2].reduce((sum, col) => {
@@ -58,7 +58,7 @@ const Game = (() => {
     },
     greenbeans: {
       displayName: 'green beans',
-      description: '2 coins, pair: +1 coin',
+      description: '2 coins, pair in column: +1 coin',
       coinValue: 2,
       scoreBonus: (count, garden) =>
         [0, 1, 2].reduce((sum, col) => {
@@ -83,12 +83,12 @@ const Game = (() => {
         }, 0),
     },
     beet: {
-      description: '2 coins, three in a row: +1 coin',
+      description: '2 coins, three in a row: +2 coins',
       coinValue: 2,
       scoreBonus: (count, garden) =>
         garden.reduce((sum, row) => {
           const inRow = row.filter((c) => c === 'beet').length;
-          return sum + (inRow === 3 ? 1 : 0);
+          return sum + (inRow === 3 ? 2 : 0);
         }, 0),
     },
     strawberry: {
@@ -200,6 +200,19 @@ const Game = (() => {
           renderDecks();
         },
       }),
+    },
+    tomato: {
+      description: '2 coins, shape ▄▀▄ or ▀▄▀: +6 coins',
+      coinValue: 2,
+      scoreBonus: (count, garden) =>
+        {
+          var bonus = 0;
+          if([garden[0][0], garden[1][1], garden[0][2]].every((c) => c==='tomato')
+            bonus += 6;
+          if([garden[1][0], garden[0][1], garden[1][2]].every((c) => c==='tomato')
+            bonus += 6;
+          return bonus;
+        },
     },
   };
   const PURCHASE_CARD_POOL = Object.freeze([...Object.keys(CARD_TYPES)]);
