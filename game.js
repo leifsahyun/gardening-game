@@ -206,7 +206,7 @@ const Game = (() => {
       coinValue: 2,
       scoreBonus: (count, garden) =>
         {
-          var bonus = 0;
+          let bonus = 0;
           if([garden[0][0], garden[1][1], garden[0][2]].every((c) => c==='tomato')
             bonus += 6;
           if([garden[1][0], garden[0][1], garden[1][2]].every((c) => c==='tomato')
